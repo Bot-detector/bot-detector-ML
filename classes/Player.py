@@ -1,6 +1,11 @@
 from pydantic import BaseModel
+import datetime
 
 class Player(BaseModel):
+    id: int
+    timestamp: datetime.datetime
+    ts_date: datetime.date
+    Player_id: int
     total: int
     Attack: int
     Defence: int
@@ -82,3 +87,4 @@ class Player(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
+    name: str
