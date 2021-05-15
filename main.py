@@ -1,5 +1,7 @@
-from typing import Optional
+
+
 from fastapi import FastAPI
+
 from classes.Player import Player
 
 # run a job every hour
