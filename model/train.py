@@ -16,24 +16,26 @@ import model.extra_data as ed
 
 import time
 
-def create_model(train_x, train_y, test_x, test_y, lbls):
+def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    rfc = rfc.fit(train_x, train_y)
     return rfc
 
 
 def train_model():
+    # get data
     df =            functions.get_highscores(config.token)
     df_players =    functions.get_players(config.token)
     df_labels =     functions.get_labels(config.token)
 
-    # pandas pipeline
+    # clean data
     df_clean = (df
         .pipe(pp.start_pipeline)
         .pipe(pp.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pp.f_features,    ed.skills_list, ed.minigames_list)
         # .pipe(pp.filter_relevant_features, ed.skills_list)
     )
+
+    # preprocess
     df_preprocess = (df_clean
         .pipe(pp.start_pipeline)
         .pipe(pp.f_standardize)
@@ -42,12 +44,10 @@ def train_model():
 
     today = int(time.time()) 
     columns = df_preprocess.columns.tolist()
-    dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
+    dump(value=columns, filename=f'model/models/features_{today}_100.joblib')
     
     # principal component analysis
-    # df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
-    # dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
-    df_pca = df_preprocess 
+    df_pca, _ = pp.f_pca(df_preprocess, n_components='mle', pca=None)
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
