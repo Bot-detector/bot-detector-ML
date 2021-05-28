@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from classes.Player import Player
+from model.train import train_model
 
 # run a job every hour
 # JOB:
@@ -29,10 +30,7 @@ def get_prediction(player: Player):
     db.append(player.dict())
     return db[-1]
 
-@app.post("/train_model")
-def train_model():
-    # get data from API
-    # preprocessing
-    # training
-    # save model
+@app.post("/train-model")
+def train():
+    train_model()
     return {'OK':'OK'}
