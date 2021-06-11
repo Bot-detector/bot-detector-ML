@@ -34,4 +34,4 @@ jobs:
         run: |
           docker stop ml_service || echo "ml_service was not running. Skipping step."
           docker build -t bdml:latest .
-          docker run -d --restart unless-stopped --rm --name ml_service bdml:latest 
+          docker run -d --restart unless-stopped --name ml_service bdml:latest 
