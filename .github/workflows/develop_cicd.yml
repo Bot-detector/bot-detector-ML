@@ -27,7 +27,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Set Up Env Variables
-        run: echo text >> .env
+        run: pwd
 
       # Runs a set of commands using the runners shell
       - name: Deploy Docker Container
