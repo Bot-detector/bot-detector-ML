@@ -1,6 +1,7 @@
 certifi==2021.5.30
 chardet==4.0.0
 fastapi==0.65.2
+gunicorn==20.1.0
 h11==0.12.0
 h2==4.0.0
 hpack==4.0.0

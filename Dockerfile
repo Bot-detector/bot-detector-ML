@@ -1,8 +1,4 @@
-FROM python:3
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 
-WORKDIR /home
-
-COPY . .
+COPY . /app
 RUN pip3 install -r requirements.txt --no-cache-dir
-
-CMD ["python3", "main.py"]
