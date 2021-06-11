@@ -32,6 +32,6 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Deploy Docker Container
         run: |
-          docker stop ml_service
+          docker stop ml_service || echo "ml_service was not running. Skipping step."
           docker build -t bdml:latest .
           docker run -d --restart unless-stopped --name ml_service bdml:latest 
