@@ -59,9 +59,7 @@ async def loop_request(BASE_URL, json, debug=True):
 
 @app.on_event('startup')
 async def initial_task():
-
-    # loop = asyncio.get_running_loop()
-    # loop.create_task(get_player_hiscores())
+    # asyncio.create_task(get_player_hiscores())
     return
 
 @app.get("/")
@@ -70,11 +68,13 @@ async def read_root():
 
 @app.get("/infinite-predict")
 async def train():
+    #TODO: verify token
     asyncio.create_task(get_player_hiscores())
     return {'ok': 'ok'}
 
 @app.get("/load")
 async def train():
+    #TODO: verify token
     if ml.model is None:
         ml.model = ml.load('model')
     return {'ok': 'ok'}
