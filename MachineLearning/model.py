@@ -1,11 +1,15 @@
+import logging
+from math import log
+import os
 import time
 
-from joblib import dump, load
 import pandas as pd
-from pandas.core.frame import DataFrame
-from MachineLearning.data import data_class
+from joblib import dump, load
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+
+from MachineLearning.data import data_class
+
 
 class model:
     save_folder = 'MachineLearning/models'
@@ -15,41 +19,131 @@ class model:
     def __init__(self, labels: list) -> None:
         self.labels = labels
 
-    def __preprocess(self, data: data_class, train:bool):
-        df = data.filter_features(base=False, feature=True, ratio=True)
-        # TODO: x, y
-        x = ''
-        y = ''
-        # TODO: train_test_split(df, y, test_size=0.3, random_state=42, stratify=y)
+    def __preprocess(
+            self,
+            hiscores: data_class, 
+            players: dict=None, 
+            labels: dict=None
+        ):
+        train = not( None == players == labels)
+        logging.debug(f'Preprocessing: {train=}, {players=}, {labels=}')
         if train:
-            train_x, train_y, test_x, test_y = train_test_split(df, y, test_size=0.3, random_state=42, stratify=y)
-            output = (train_x, train_y, test_x, test_y)
-        else:
-            output = (x, y)
-        return df, output
-    
-    def load(self) -> None:
-        #TODO: load model from file, if fail raise error
-        #TODO: load other objects we might need (scaler, normalizer, pca??)
+            # players datafrmae
+            df_players = pd.DataFrame(players)
+            df_players.set_index('id', inplace=True)
+            # filter dataframe
+            df_players = df_players[['label_id']]
+
+            # labels dataframe
+            df_labels = pd.DataFrame(labels)
+            df_labels.set_index('id', inplace=True)
+            # memory cleanup
+            del players, labels
+        
+        # hiscores dataframe
+        df_hiscores = hiscores.filter_features(base=False, feature=True, ratio=True)
+
+        # TODO: merge dataframes
+        df = df_hiscores.copy()
+        if train: 
+            df = df.merge(df_players, left_index=True, right_index=True)
+            df = df.merge(df_labels, left_on='label_id', right_index=True)
+            # cleanup columns
+            df.drop(columns=['label_id'], inplace=True)
+            
+        # Create x & y data
+        x = df[df_hiscores.columns]
+        y = df['label'] if train else None
+
+        # train test split
+        if train:
+            # X_train, X_test, y_train, y_test
+            train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
+            return (train_x, train_y, test_x, test_y)
+        return (x, y)
+
+    def __best_file_path(self, startwith):
+        files = []
+        for f in os.listdir(self.save_folder):
+            if f.endswith(".joblib") and f.startswith(startwith):
+                # accuracy is in filename, so we have to parse it
+                model_file = f.replace('.joblib','')
+                model_file = model_file.split(sep='_')
+                # save to dict
+                d ={
+                    'path': f'{self.save_folder}/{f}',
+                    'model': model_file[0],
+                    'date': model_file[1],
+                    'accuracy': model_file[2]
+                }
+                # add dict to array
+                files.append(d)
+
+        # array of dict can be used for pandas dataframe
+        df_files = pd.DataFrame(files)
+        df_files.sort_values(by=['date'], ascending=False, inplace=True)
+        model_path = df_files['path'].iloc[0]
+        return model_path
+
+    def load(self, name) -> None:
+        try:
+            path = self.__best_file_path(name)
+            logging.debug(f'{name=}, {path=}')
+            object = load(path)
+        except Exception as exception:
+            logging.warning(f'Error when loading {name}: {exception=}')
+            return
+        return object
+
+    def __save(self, object, name, score):
+        #TODO save model & other objects we might need
+        dump(value=object, filename=f'{self.save_folder}/{name}_{self.today}_{score}.joblib')
         return
 
     def create_model(self):
+        logging.debug('Creating Model')
         self.model = RandomForestClassifier(n_estimators=300, random_state=7, n_jobs=-1)
         return self.model
     
-    def train(self, data: data_class) -> None:
-        df, (x, y) = self.__preprocess(self, data, True)
+    def train(self, players: dict, labels: dict, hiscores: data_class) -> None:
+        # preprocess data
+        (train_x, train_y, test_x, test_y) = self.__preprocess(
+            hiscores=hiscores, players=players, labels=labels
+        )
+
+        # memory cleanup
+        del players, labels, hiscores
 
         # create model if there is none
         if self.model == None:
             self.create_model()
 
-        self.model.fit(x,y)
-        pass
+        # fit model
+        logging.debug('Training Model')
+        self.model.fit(train_x, train_y)
 
-    def predict(self, data: data_class) -> list:
-        df = self.__preprocess(self, data)
+        # evaluate model
+        logging.debug('Scoring Model')
+        score = self.model.score(test_x, test_y)
+        score = round(score, 2)
+
+        # logging
+        logging.debug(f'MachineLearning: {score=}')
+        # save model
+        self.__save(self.model, 'model', score)
+        return # evaluation
+
+    def predict(self, hiscores: data_class) -> list:
+        # preprocess data
+        (x, y) = self.__preprocess(
+            hiscores=hiscores, players=None, labels=None
+        )
+
+        # load model if not exists
         if self.model == None:
-            self.load()
-        prediction = self.model.predict(df)
+            self.model = self.load('model')
+
+        # make prediction
+        prediction = self.model.predict(x)
+        
         return prediction

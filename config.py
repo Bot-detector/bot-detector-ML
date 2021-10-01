@@ -1,4 +1,5 @@
 import logging
+from math import log
 import os
 import sys
 
@@ -29,3 +30,5 @@ stream_handler.setFormatter(formatter)
 # add handler
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
+
+logging.getLogger('urllib3').setLevel(logging.WARNING)

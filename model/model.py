@@ -280,7 +280,7 @@ class model:
                 model_file = model_file.split(sep='_')
                 # save to dict
                 d ={
-                    'path': f'{dir}/{f}',
+                    'path': str(f),
                     'model': model_file[0],
                     'date': model_file[1],
                     'accuracy': model_file[2]
@@ -327,8 +327,10 @@ class model:
         # if load was not succesfull train model
         if succes is None:
             self.train()
-        # preprocess data
 
+        # preprocess data
         self.__preprocess(df)
+
+        # predict data
         pred = self.model.predict(self.df)
         return pred
