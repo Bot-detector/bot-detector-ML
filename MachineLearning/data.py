@@ -22,7 +22,8 @@ class data_class:
         self.df_clean = self.df.copy()
         
         # drop unrelevant columns
-        self.users = self.df_clean[['Player_id','name']]
+        irrelevant = ['Player_id', 'name'] if 'name' in self.df_clean.columns else ['Player_id']
+        self.users = self.df_clean[irrelevant]
         self.df_clean.drop(columns=['id','timestamp','ts_date','name'], inplace=True)
 
         # set unique index
