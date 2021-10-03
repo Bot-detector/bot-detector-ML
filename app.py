@@ -144,11 +144,15 @@ async def get_player_hiscores():
 
     # clean & filter data
     data = data_class(data)
-
+    
     # make predictions
-    predictions = ml.predict(data)
-    #TODO: combine user_id with prediction
+    predictions = ml.predict(data) # dataframe
+    predictions = predictions.to_dict(orient='records') # list of dict
 
     # post predictions
-    #TODO: post prediction to api
+    url = f'{detector_api}/v1/prediction?token={token}'
+    logging.debug(url)
+    resp = requests.post(url, json=predictions)
+
+    print(resp.text)
     return asyncio.create_task(get_player_hiscores())

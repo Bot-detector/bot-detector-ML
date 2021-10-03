@@ -133,7 +133,7 @@ class model:
         self.__save(self.model, 'model', score)
         return # evaluation
 
-    def predict(self, hiscores: data_class) -> list:
+    def predict(self, hiscores: data_class) -> pd.DataFrame:
         # preprocess data
         (x, y) = self.__preprocess(
             hiscores=hiscores, players=None, labels=None
@@ -144,6 +144,25 @@ class model:
             self.model = self.load('model')
 
         # make prediction
-        prediction = self.model.predict(x)
+        proba =     self.model.predict_proba(x)
+        proba_max = proba.max(axis=1)
+        pred =      self.model.predict(x)
+
+        df_proba =          pd.DataFrame(proba,         index=x.index, columns=self.labels).round(4)
+        df_proba_max =      pd.DataFrame(proba_max,     index=x.index, columns=['Predicted_confidence']).round(4)
+        df_predictions =    pd.DataFrame(pred,          index=x.index, columns=['Prediction'])
         
-        return prediction
+        df_proba_max = df_proba_max*100
+        df_proba = df_proba*100
+
+        df = pd.DataFrame(index=x.index)
+        df['created'] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+
+        df = df.merge(df_predictions, left_index=True, right_index=True, suffixes=('', '_prediction'), how='inner')
+        df = df.merge(df_proba_max,   left_index=True, right_index=True, how='inner')
+        df = df.merge(df_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
+        df = df.merge(hiscores.users, left_index=True, right_on='Player_id', how='inner')
+        
+        # df.reset_index(inplace=True)
+        df.rename(columns={'Player_id':'id'}, inplace=True)
+        return df

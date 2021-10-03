@@ -22,7 +22,8 @@ class data_class:
         self.df_clean = self.df.copy()
         
         # drop unrelevant columns
-        self.df_clean.drop(columns=['id','timestamp','ts_date'], inplace=True)
+        self.users = self.df_clean[['Player_id','name']]
+        self.df_clean.drop(columns=['id','timestamp','ts_date','name'], inplace=True)
 
         # set unique index
         self.df_clean.set_index(['Player_id'], inplace=True)
