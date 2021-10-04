@@ -75,6 +75,7 @@ async def get_player_hiscores():
     # make predictions
     predictions = ml.predict(data) # dataframe
     predictions = predictions.to_dict(orient='records') # list of dict
+    print(predictions[-1])
 
     # post predictions
     url = f'{detector_api}/v1/prediction?token={token}'

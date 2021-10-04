@@ -2,6 +2,7 @@ import logging
 from math import log
 import os
 import time
+import numpy as np
 
 import pandas as pd
 from joblib import dump, load
@@ -44,7 +45,7 @@ class model:
         # hiscores dataframe
         df_hiscores = hiscores.filter_features(base=False, feature=True, ratio=True)
 
-        # TODO: merge dataframes
+        # merge dataframes
         df = df_hiscores.copy()
         if train: 
             df = df.merge(df_players, left_index=True, right_index=True)
@@ -149,10 +150,10 @@ class model:
         proba_max = proba.max(axis=1)
         pred =      self.model.predict(x)
 
-        df_proba =          pd.DataFrame(proba,         index=x.index, columns=self.labels).round(4)
+        df_proba =          pd.DataFrame(proba,         index=x.index, columns=self.model.classes_).round(4)
         df_proba_max =      pd.DataFrame(proba_max,     index=x.index, columns=['Predicted_confidence']).round(4)
         df_predictions =    pd.DataFrame(pred,          index=x.index, columns=['Prediction'])
-        
+
         df_proba_max = df_proba_max*100
         df_proba = df_proba*100
 
