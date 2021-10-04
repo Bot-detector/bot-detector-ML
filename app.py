@@ -57,27 +57,53 @@ async def loop_request(BASE_URL, json, debug=True):
         i += 1
     return data
 
+async def get_player_hiscores():
+    logging.debug('getting data')
+    url = f'{detector_api}/v1/prediction/data?token={token}'
+    logging.debug(url)
+    data = requests.get(url).json()
+
+    # if there is no data wait and try to see if there is new data
+    if len(data) == 0:
+        logging.debug('no data to predict')
+        await asyncio.sleep(600)
+        return asyncio.create_task(get_player_hiscores())
+
+    # clean & filter data
+    data = data_class(data)
+    
+    # make predictions
+    predictions = ml.predict(data) # dataframe
+    predictions = predictions.to_dict(orient='records') # list of dict
+
+    # post predictions
+    url = f'{detector_api}/v1/prediction?token={token}'
+    logging.debug(url)
+    resp = requests.post(url, json=predictions)
+
+    print(resp.text)
+    return asyncio.create_task(get_player_hiscores())
+
 @app.on_event('startup')
 async def initial_task():
-    # asyncio.create_task(get_player_hiscores())
+    asyncio.create_task(get_player_hiscores())
     return
 
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
 
-@app.get("/infinite-predict")
-async def train():
-    #TODO: verify token
-    asyncio.create_task(get_player_hiscores())
-    return {'ok': 'ok'}
-
 @app.get("/load")
-async def train():
+async def load():
     #TODO: verify token
     if ml.model is None:
         ml.model = ml.load('model')
     return {'ok': 'ok'}
+
+@app.get("/predict")
+async def train():
+    #TODO: verify token
+    return 
 
 @app.get("/train")
 async def train():
@@ -129,30 +155,3 @@ async def train():
     # memory cleanup
     del players, labels, hiscores
     return {'ok': 'ok'}
-
-async def get_player_hiscores():
-    logging.debug('getting data')
-    url = f'{detector_api}/v1/prediction/data?token={token}'
-    logging.debug(url)
-    data = requests.get(url).json()
-
-    # if there is no data wait and try to see if there is new data
-    if len(data) == 0:
-        logging.debug('no data to predict')
-        await asyncio.sleep(600)
-        return asyncio.create_task(get_player_hiscores())
-
-    # clean & filter data
-    data = data_class(data)
-    
-    # make predictions
-    predictions = ml.predict(data) # dataframe
-    predictions = predictions.to_dict(orient='records') # list of dict
-
-    # post predictions
-    url = f'{detector_api}/v1/prediction?token={token}'
-    logging.debug(url)
-    resp = requests.post(url, json=predictions)
-
-    print(resp.text)
-    return asyncio.create_task(get_player_hiscores())
