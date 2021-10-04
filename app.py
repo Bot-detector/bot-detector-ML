@@ -2,10 +2,10 @@ import asyncio
 import logging
 from math import log
 
-import aiohttp
 import requests
+from fastapi import HTTPException
 
-from config import app, detector_api, token
+from config import app, detector_api, secret_token, token
 from MachineLearning.data import data_class
 from MachineLearning.model import model
 
@@ -95,21 +95,28 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/load")
-async def load():
+async def load(token:str):
     #TODO: verify token
+    if token != secret_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+
     if ml.model is None:
         ml.model = ml.load('model')
     return {'ok': 'ok'}
 
 @app.get("/predict")
-async def train():
+async def predict(token:str):
     #TODO: verify token
+    if token != secret_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        
     return 
 
 @app.get("/train")
-async def train():
+async def train(token: str):
     #TODO: verify token
-
+    if token != secret_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     # request labels
     url = f'{detector_api}/v1/label?token={token}'
