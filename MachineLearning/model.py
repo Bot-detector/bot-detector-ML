@@ -26,7 +26,8 @@ class model:
             labels: dict=None
         ):
         train = not( None == players == labels)
-        logging.debug(f'Preprocessing: {train=}, {players[0]=}, {labels=}')
+        player = players[0] if players else []
+        logging.debug(f'Preprocessing: {train=}, {player=}, {labels=}')
         if train:
             # players datafrmae
             df_players = pd.DataFrame(players)
