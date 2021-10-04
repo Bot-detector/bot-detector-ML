@@ -75,7 +75,6 @@ async def get_player_hiscores():
     # make predictions
     predictions = ml.predict(data) # dataframe
     predictions = predictions.to_dict(orient='records') # list of dict
-    print(predictions[-1])
 
     # post predictions
     url = f'{detector_api}/v1/prediction?token={token}'
@@ -109,7 +108,7 @@ async def predict(token:str):
     #TODO: verify token
     if token != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
-        
+
     return 
 
 @app.get("/train")
