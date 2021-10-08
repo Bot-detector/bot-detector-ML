@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bd-ml-balancer
+spec:
+  selector:
+    app: bd-scraper
+  ports:
+  - protocol: "TCP"
+    port: 6532
+    targetPort: 5000
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bd-ml
+spec:
+  selector:
+    matchLabels:
+      app: bd-ml
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bd-ml
+    spec:
+      containers:
+      - name: bd-ml
+        image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000

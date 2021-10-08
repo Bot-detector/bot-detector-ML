@@ -18,7 +18,7 @@ LABELS = [
     'Cooking_bot', 'mort_myre_fungus_bot', 
     'Woodcutting_bot', 'Fishing_Cooking_bot',
     'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
-    'Zalcano_bot'
+    'Zaff_BStaff_Bot', 'Zalcano_bot', 'Mage_Guild_Store_bot'
 ]
 
 ml = model(LABELS)
