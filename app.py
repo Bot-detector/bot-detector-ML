@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from math import log
 
 import requests
 from fastapi import HTTPException
@@ -23,12 +22,15 @@ LABELS = [
 
 ml = model(LABELS)
 
-async def loop_request(BASE_URL, json, debug=True):
+async def loop_request(base_url, json):
+    '''
+        this function gets all the data of a paginated route
+    '''
     i, data = 1, []
 
     while True:
         # build url
-        url = f'{BASE_URL}&row_count=100000&page={i}'
+        url = f'{base_url}&row_count=100000&page={i}'
 
         # logging
         logging.debug(f'Request: {url=}')
@@ -36,7 +38,7 @@ async def loop_request(BASE_URL, json, debug=True):
         # make reqest
         res = requests.post(url, json=json)
 
-        # break condition
+        # escape condition
         if not res.status_code == 200:
             logging.debug(f'Break: {res.status_code=}, {url=}')
             break
@@ -45,7 +47,7 @@ async def loop_request(BASE_URL, json, debug=True):
         res = res.json()
         data += res
 
-        # break condition
+        # escape condition
         if len(res) == 0:
             logging.debug(f'Break: {len(res)=}, {url=}')
             break
