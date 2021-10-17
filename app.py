@@ -61,7 +61,7 @@ async def loop_request(base_url, json):
 
 async def get_player_hiscores():
     logging.debug('getting data')
-    url = f'{detector_api}/v1/prediction/data?token={token}&limit=5000'
+    url = f'{detector_api}/v1/prediction/data?token={token}&limit=50000'
     logging.debug(url)
     data = requests.get(url).json()
 
