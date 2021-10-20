@@ -167,9 +167,6 @@ class model:
         
         mask = (df['Player_id'].isin(hiscores.df_low.index))
         df.loc[mask, ['Prediction']] = 'Stats too low'
-        print(df[mask])
 
-        # df['Prediction'] = np.where(df.isin({'Player_id': hiscores.df_low.index}), 'Stats to low', df['Prediction'])
-        # df.reset_index(inplace=True)
         df.rename(columns={'Player_id':'id'}, inplace=True)
         return df
