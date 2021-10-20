@@ -15,6 +15,8 @@ class data_class:
 
         # defaults
         self.df_clean = None
+        self.df_low = None
+        self.minigames = None
         self.skills = skills
 
     def clean(self):
@@ -22,7 +24,6 @@ class data_class:
         self.df_clean = self.df.copy()
         
         # drop unrelevant columns
-        irrelevant = ['Player_id']
         if 'name' in self.df_clean.columns:
             self.users = self.df_clean[['Player_id','name']]
             self.df_clean.drop(columns=['id','timestamp','ts_date','name'], inplace=True)
@@ -41,6 +42,11 @@ class data_class:
         
         self.df_clean[self.minigames] = self.df_clean[self.minigames].replace(-1, 1)
         self.df_clean['boss_total'] = self.df_clean[self.minigames].sum(axis=1)
+
+        # get low lvl players
+        mask = (self.df_clean['total'] < 1_000_000)
+        self.df_low = self.df_clean[mask].copy()
+
         return self.df_clean
     
     def add_features(self):
