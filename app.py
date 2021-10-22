@@ -114,9 +114,9 @@ async def predict(token:str):
     return 
 
 @app.get("/train")
-async def train(token: str):
+async def train(secret: str, token: str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     # request labels
