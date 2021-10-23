@@ -95,6 +95,11 @@ async def initial_task():
 async def read_root():
     return {"Hello": "World"}
 
+@app.get("/startup")
+async def manual_startup():
+    asyncio.create_task(get_player_hiscores())
+    return {'ok': 'Predictions have been started.'}
+
 @app.get("/load")
 async def load(token:str):
     #TODO: verify token
