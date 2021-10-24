@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: bd-ml-clusterip
+  name: bd-ml-service
 spec:
   selector:
-    app: bd-scraper
+    app: bd-ml
   ports:
   - protocol: "TCP"
     port: 6532
@@ -20,6 +20,7 @@ spec:
   replicas: 1
   template:
     metadata:
+      name: bl-ml-app
       labels:
         app: bd-ml
     spec:
