@@ -32,3 +32,5 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
+      imagePullSecrets:
+      - name: regcred
