@@ -24,11 +24,26 @@ spec:
       labels:
         app: bd-ml
     spec:
+      volumes:
+      - name: nfs-volume
+        nfs: 
+          server: 51.68.207.197
+          path: /cluster
       containers:
       - name: bd-ml
         image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
         imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "4500Mi"
+            cpu: "2500m"
+          requests:
+            memory: "4500Mi"
+            cpu: "2500m"
         ports:
         - containerPort: 6532
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /MachineLearning/models
       imagePullSecrets:
       - name: regcred
