@@ -9,15 +9,30 @@ from MachineLearning.data import data_class
 from MachineLearning.model import model
 
 LABELS = [
-    'Real_Player', 'Smithing_bot', 'Mining_bot', 
-    'Magic_bot', 'PVM_Ranged_bot',  
-    'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
-    'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
-    'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-    'Cooking_bot', 'mort_myre_fungus_bot', 
-    'Woodcutting_bot', 'Fishing_Cooking_bot',
-    'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
-    'Zaff_BStaff_Bot', 'Zalcano_bot', 'Mage_Guild_Store_bot'
+    'Real_Player',
+    'PVM_Melee_bot',
+    'Smithing_bot',
+    'Magic_bot',
+    'Fishing_bot',
+    'Mining_bot',
+    'Crafting_bot',
+    'PVM_Ranged_Magic_bot',
+    'PVM_Ranged_bot',
+    'Hunter_bot',
+    'Fletching_bot',
+    'Clue_Scroll_bot',
+    'LMS_bot',
+    'Agility_bot',
+    'Wintertodt_bot',
+    'Runecrafting_bot',
+    'Zalcano_bot',
+    'Woodcutting_bot',
+    'Thieving_bot',
+    'Soul_Wars_bot',
+    'Cooking_bot',
+    'Vorkath_bot',
+    'Barrows_bot',
+    'Herblore_bot'
 ]
 
 ml = model(LABELS)
