@@ -9,4 +9,4 @@ COPY . .
 
 RUN mkdir -p MachineLearning/models
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "6532"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "6532", "--root-path", "/ml"]
