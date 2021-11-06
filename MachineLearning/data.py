@@ -88,7 +88,7 @@ class data_class:
         # filters
         base_columns = self.df.columns if base else []
         feature_columns = [c for c in self.df_clean.columns if '_feature' in c] if feature else []
-        ratio_columns = [c for c in self.df_clean.columns if '/total' in c or '/boss_total'] if ratio else []
+        ratio_columns = [c for c in self.df_clean.columns if '/total' in c or '/boss_total' in c] if ratio else []
 
         # combine all columns
         columns = base_columns + feature_columns + ratio_columns
