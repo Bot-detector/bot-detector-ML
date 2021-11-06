@@ -37,10 +37,10 @@ class data_class:
         self.minigames = [c for c in columns if c not in skills and c != 'total']
 
         # total is not always on hiscores
-        self.df_clean[self.skills] = self.df_clean[self.skills].replace(-1, 1)
+        self.df_clean[self.skills] = self.df_clean[self.skills].replace(-1, 0)
         self.df_clean['total'] = self.df_clean[self.skills].sum(axis=1)
         
-        self.df_clean[self.minigames] = self.df_clean[self.minigames].replace(-1, 1)
+        self.df_clean[self.minigames] = self.df_clean[self.minigames].replace(-1, 0)
         self.df_clean['boss_total'] = self.df_clean[self.minigames].sum(axis=1)
 
         # get low lvl players
