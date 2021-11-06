@@ -86,7 +86,7 @@ class data_class:
             self.add_features() if feature else self.clean()
         
         # filters
-        base_columns = [c for c in self.df_clean.columns if '_' not in c or '/' not in c] if base else []
+        base_columns = [c for c in self.df_clean.columns if not ('_' in c or '/' in c)] if base else []
         feature_columns = [c for c in self.df_clean.columns if '_feature' in c] if feature else []
         ratio_columns = [c for c in self.df_clean.columns if '/total' in c or '/boss_total' in c] if ratio else []
 
