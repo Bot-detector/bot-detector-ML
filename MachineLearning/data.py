@@ -34,7 +34,7 @@ class data_class:
         self.df_clean.set_index(['Player_id'], inplace=True)
 
         columns = self.df_clean.columns
-        self.minigames = [c for c in columns if c not in skills]
+        self.minigames = [c for c in columns if c not in skills and c != 'total']
 
         # total is not always on hiscores
         self.df_clean[self.skills] = self.df_clean[self.skills].replace(-1, 1)
@@ -86,7 +86,7 @@ class data_class:
             self.add_features() if feature else self.clean()
         
         # filters
-        base_columns = self.df.columns if base else []
+        base_columns = [c for c in self.df_clean.columns if '_' not in c or '/' not in c] if base else []
         feature_columns = [c for c in self.df_clean.columns if '_feature' in c] if feature else []
         ratio_columns = [c for c in self.df_clean.columns if '/total' in c or '/boss_total' in c] if ratio else []
 
