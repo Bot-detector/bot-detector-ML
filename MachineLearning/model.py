@@ -1,12 +1,11 @@
 import logging
-from math import log
 import os
 import time
-import numpy as np
 
 import pandas as pd
 from joblib import dump, load
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
 from MachineLearning.data import data_class
@@ -131,6 +130,7 @@ class model:
 
         # logging
         logging.debug(f'MachineLearning: {score=}')
+        logging.debug(classification_report(test_y, self.model.predict(test_x)))
         # save model
         self.__save(self.model, 'model', score)
         return # evaluation
