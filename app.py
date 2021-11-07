@@ -101,10 +101,10 @@ async def get_player_hiscores():
     print(resp.text)
     return asyncio.create_task(get_player_hiscores())
 
-@app.on_event('startup')
-async def initial_task():
-    asyncio.create_task(get_player_hiscores())
-    return
+# @app.on_event('startup')
+# async def initial_task():
+#     asyncio.create_task(get_player_hiscores())
+#     return
 
 @app.get("/")
 async def read_root():
