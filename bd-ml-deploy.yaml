@@ -28,7 +28,7 @@ spec:
       - name: nfs-volume
         nfs: 
           server: 51.68.207.197
-          path: /cluster
+          path: /cluster/models
       containers:
       - name: bd-ml
         image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
