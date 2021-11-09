@@ -98,7 +98,10 @@ class model:
 
     def __save(self, object, name, score):
         #TODO save model & other objects we might need
-        dump(value=object, filename=f'{self.save_folder}/{name}_{self.today}_{score}.joblib')
+        logging.debug('Saving model')
+        filename = f'{self.save_folder}/{name}_{self.today}_{score}.joblib'
+        dump(value=object, filename=filename)
+        logging.debug(f'{filename} saved to {self.save_folder}')
         return
 
     def create_model(self):
@@ -132,6 +135,7 @@ class model:
         logging.debug(f'MachineLearning: {score=}')
         logging.debug(classification_report(test_y, self.model.predict(test_x)))
         # save model
+        logging.debug(f"Saving model to {self.save_folder}")
         self.__save(self.model, 'model', score)
         return # evaluation
 

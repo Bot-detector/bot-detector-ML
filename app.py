@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 import requests
-from fastapi import HTTPException
+from fastapi import HTTPException, BackgroundTasks
 
 from config import app, detector_api, secret_token, token
 from MachineLearning.data import data_class
@@ -74,6 +74,57 @@ async def loop_request(base_url, json):
         i += 1
     return data
 
+
+async def stage_and_train(token: str):
+    # request labels
+    url = f'{detector_api}/v1/label?token={token}'
+
+    # logging
+    logging.debug(f'Request: {url=}')
+    data = requests.get(url).json()
+
+    # filter labels
+    labels = [d for d in data if d['label'] in LABELS]
+    
+    # memory cleanup
+    del url, data
+
+    # create an input dict for url
+    label_input = {}
+    label_input['label_id'] = [l['id'] for l in labels]
+    
+    # request all player with label
+    url = f'{detector_api}/v1/player/bulk?token={token}'
+    data = await loop_request(url, label_input)
+
+    # players dict
+    players = data
+
+    # memory cleanup
+    del url, data
+
+    # get all player id's
+    player_input = {}
+    player_input['player_id'] = [int(p['id']) for p in players]
+
+    # request hiscore data latest with player_id
+    url = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
+    data = await loop_request(url, player_input)
+
+    # hiscores dict
+    hiscores = data_class(data)
+
+    # memory cleanup
+    del url, data
+
+    ml.train(players, labels, hiscores)
+
+    logging.debug("Preparing to clean training data.")
+    del players, labels, hiscores
+    logging.debug("Training data cleanup completed.")
+
+    return
+
 async def get_player_hiscores():
     logging.debug('getting data')
     url = f'{detector_api}/v1/prediction/data?token={token}&limit=50000'
@@ -134,53 +185,11 @@ async def predict(token:str):
     return 
 
 @app.get("/train")
-async def train(secret: str, token: str):
+async def train(secret: str, token: str, train_tasks: BackgroundTasks):
     #TODO: verify token
     if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
-    # request labels
-    url = f'{detector_api}/v1/label?token={token}'
+    train_tasks.add_task(stage_and_train, token)
 
-    # logging
-    logging.debug(f'Request: {url=}')
-    data = requests.get(url).json()
-
-    # filter labels
-    labels = [d for d in data if d['label'] in LABELS]
-    
-    # memory cleanup
-    del url, data
-
-    # create an input dict for url
-    label_input = {}
-    label_input['label_id'] = [l['id'] for l in labels]
-    
-    # request all player with label
-    url = f'{detector_api}/v1/player/bulk?token={token}'
-    data = await loop_request(url, label_input)
-
-    # players dict
-    players = data
-
-    # memory cleanup
-    del url, data
-
-    # get all player id's
-    player_input = {}
-    player_input['player_id'] = [int(p['id']) for p in players]
-
-    # request hiscore data latest with player_id
-    url = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
-    data = await loop_request(url, player_input)
-
-    # hiscores dict
-    hiscores = data_class(data)
-
-    # memory cleanup
-    del url, data
-
-    ml.train(players, labels, hiscores)
-    # memory cleanup
-    del players, labels, hiscores
-    return {'ok': 'ok'}
+    return {'ok': 'Training has begun.'}
