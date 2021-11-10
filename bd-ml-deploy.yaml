@@ -33,6 +33,13 @@ spec:
       - name: bd-ml
         image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
         imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "4500Mi"
+            cpu: "2500m"
+          requests:
+            memory: "4500Mi"
+            cpu: "2500m"
         ports:
         - containerPort: 6532
         volumeMounts:
