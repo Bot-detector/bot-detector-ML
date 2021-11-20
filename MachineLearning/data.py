@@ -18,6 +18,7 @@ class data_class:
         self.df_low = None
         self.minigames = None
         self.skills = skills
+        self.users = None
 
     def clean(self):
         logging.debug('Cleaning data')
@@ -92,5 +93,8 @@ class data_class:
 
         # combine all columns
         columns = base_columns + feature_columns + ratio_columns
+
+        self.df_clean = self.df_clean.replace([np.inf, -np.inf], 0) 
+        self.df_clean.fillna(0, inplace=True)
         return self.df_clean[columns]
 

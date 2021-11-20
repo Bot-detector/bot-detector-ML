@@ -20,7 +20,6 @@ LABELS = [
     'PVM_Ranged_bot',
     'Hunter_bot',
     'Fletching_bot',
-    'Clue_Scroll_bot',
     'LMS_bot',
     'Agility_bot',
     'Wintertodt_bot',
@@ -32,7 +31,8 @@ LABELS = [
     'Cooking_bot',
     'Vorkath_bot',
     'Barrows_bot',
-    'Herblore_bot'
+    'Herblore_bot',
+    'Unknown_bot'
 ]
 
 ml = model(LABELS)
@@ -176,19 +176,35 @@ async def load(token:str):
         ml.model = ml.load('model')
     return {'ok': 'ok'}
 
-@app.get("/predict")
-async def predict(token:str):
+@app.get("/predict/{player}")
+async def predict(token:str, secret:str, player_name:str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
+    if ml.model is None:
+        ml.model = ml.load('model')
 
-    return 
+    url = f'{detector_api}/v1/player?token={token}&player_name={player_name}'
+    player = requests.get(url)
+    player = player.json()[0]
+    player_id = player.get('id')
+
+    url = f'{detector_api}/v1/hiscore/Latest?token={token}&player_id={player_id}'
+    data = requests.get(url)
+    data = data.json()
+    # clean & filter data
+    data = data_class(data)
+    
+    # make predictions
+    predictions = ml.predict(data) # dataframe
+    predictions = predictions.to_dict(orient='records')
+    return predictions
 
 @app.get("/train")
 async def train(secret: str, token: str, train_tasks: BackgroundTasks):
     #TODO: verify token
     if secret != secret_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        return HTTPException(status_code=404, detail=f"insufficient permissions")
 
     train_tasks.add_task(stage_and_train, token)
 

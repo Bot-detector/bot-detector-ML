@@ -42,7 +42,7 @@ class model:
             del players, labels
         
         # hiscores dataframe
-        df_hiscores = hiscores.filter_features(base=False, feature=True, ratio=True)
+        df_hiscores = hiscores.filter_features(base=True, feature=True, ratio=True)
 
         # merge dataframes
         df = df_hiscores.copy()
@@ -51,11 +51,13 @@ class model:
             df = df.merge(df_labels, left_on='label_id', right_index=True)
             # cleanup columns
             df.drop(columns=['label_id'], inplace=True)
+            assert 'Real_Player' in df['label'].unique(), 'Real Player is not in labels'
+            logging.debug(f'labels: {df["label"].unique()}')
             
         # Create x & y data
         x = df[df_hiscores.columns]
         y = df['label'] if train else None
-
+        
         # train test split
         if train:
             # X_train, X_test, y_train, y_test
@@ -167,10 +169,12 @@ class model:
         df = df.merge(df_predictions, left_index=True, right_index=True, suffixes=('', '_prediction'), how='inner')
         df = df.merge(df_proba_max,   left_index=True, right_index=True, how='inner')
         df = df.merge(df_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
-        df = df.merge(hiscores.users, left_index=True, right_on='Player_id', how='inner')
+        if hiscores.users is not None:
+            df = df.merge(hiscores.users, left_index=True, right_on='Player_id', how='inner')
         
-        mask = (df['Player_id'].isin(hiscores.df_low.index))
-        df.loc[mask, ['Prediction']] = 'Stats too low'
+        if  hiscores.df_low.empty == False:
+            mask = (df['Player_id'].isin(hiscores.df_low.index))
+            df.loc[mask, ['Prediction']] = 'Stats too low'
 
         df.rename(columns={'Player_id':'id'}, inplace=True)
         return df
