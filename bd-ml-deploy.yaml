@@ -38,8 +38,8 @@ spec:
             memory: "4500Mi"
             cpu: "2500m"
           requests:
-            memory: "4500Mi"
-            cpu: "2500m"
+            memory: "2000Mi"
+            cpu: "1000m"
         ports:
         - containerPort: 6532
         volumeMounts:
