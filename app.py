@@ -32,12 +32,13 @@ LABELS = [
     'Cooking_bot',
     'Vorkath_bot',
     'Barrows_bot',
-    'Herblore_bot'
+    'Herblore_bot',
+    'Zulrah_bot'
 ]
 
 ml = model(LABELS)
 
-async def loop_request(base_url, json):
+async def loop_request(base_url, json={}, type='get'):
     '''
         this function gets all the data of a paginated route
     '''
@@ -51,11 +52,18 @@ async def loop_request(base_url, json):
         logging.debug(f'Request: {url=}')
 
         # make reqest
-        res = requests.post(url, json=json)
-
+        if type == 'get':
+            res = requests.get(url)
+        elif type == 'post':
+            res = requests.post(url, json=json)
+            logging.debug(json)
+        else:
+            raise 'No type specified'
+        
         # escape condition
         if not res.status_code == 200:
             logging.debug(f'Break: {res.status_code=}, {url=}')
+            logging.debug(res.text)
             break
         
         # parse data
@@ -90,32 +98,25 @@ async def stage_and_train(token: str):
     del url, data
 
     # create an input dict for url
-    label_input = {}
-    label_input['label_id'] = [l['id'] for l in labels]
-    
-    # request all player with label
-    url = f'{detector_api}/v1/player/bulk?token={token}'
-    data = await loop_request(url, label_input)
-
-    # players dict
-    players = data
+    players = []
+    for label in labels:
+        url = f'{detector_api}/v1/player?token={token}&label_id={label["id"]}'
+        players.extend(await loop_request(url))
 
     # memory cleanup
-    del url, data
+    del url
 
-    # get all player id's
-    player_input = {}
-    player_input['player_id'] = [int(p['id']) for p in players]
+    hiscores = []
+    for player in players:
+        url = f'{detector_api}/v1/hiscore/Latest?token={token}&player_id={player["id"]}'
+        hiscores.extend(await loop_request(url))
 
-    # request hiscore data latest with player_id
-    url = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
-    data = await loop_request(url, player_input)
 
     # hiscores dict
-    hiscores = data_class(data)
+    hiscores = data_class(hiscores)
 
     # memory cleanup
-    del url, data
+    del url
 
     ml.train(players, labels, hiscores)
 
@@ -162,14 +163,18 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/startup")
-async def manual_startup():
+async def manual_startup(secret:str):
+    #TODO: verify token
+    if secret != secret_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+
     asyncio.create_task(get_player_hiscores())
     return {'ok': 'Predictions have been started.'}
 
 @app.get("/load")
-async def load(token:str):
+async def load(secret:str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     if ml.model is None:
@@ -177,9 +182,9 @@ async def load(token:str):
     return {'ok': 'ok'}
 
 @app.get("/predict")
-async def predict(token:str):
+async def predict(secret:str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     return 
