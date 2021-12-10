@@ -37,6 +37,7 @@ LABELS = [
 
 ml = model(LABELS)
 
+#TODO: seperate file for helper functions
 async def loop_request(base_url, json):
     '''
         this function gets all the data of a paginated route
@@ -73,7 +74,6 @@ async def loop_request(base_url, json):
         # update iterator
         i += 1
     return data
-
 
 async def stage_and_train(token: str):
     # request labels
@@ -122,6 +122,19 @@ async def stage_and_train(token: str):
     logging.debug("Preparing to clean training data.")
     del players, labels, hiscores
     logging.debug("Training data cleanup completed.")
+
+    return
+
+async def batch_function(function, data, batch_size=100):
+    batches = []
+    for i in range(0, len(data), batch_size):
+        logging.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        batch = data[i:i+batch_size]
+        batches.append(batch)
+
+    await asyncio.gather(*[
+        asyncio.create_task(function(batch)) for batch in batches
+    ])
 
     return
 
@@ -201,11 +214,10 @@ async def predict(token:str, secret:str, player_name:str):
     return predictions
 
 @app.get("/train")
-async def train(secret: str, token: str, train_tasks: BackgroundTasks):
-    #TODO: verify token
+async def train(secret: str, token: str, background: BackgroundTasks):
     if secret != secret_token:
         return HTTPException(status_code=404, detail=f"insufficient permissions")
 
-    train_tasks.add_task(stage_and_train, token)
+    background.add_task(stage_and_train, token)
 
     return {'ok': 'Training has begun.'}
