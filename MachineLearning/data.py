@@ -1,9 +1,9 @@
-from logging import log
 import logging
+
 import numpy as np
 import pandas as pd
 
-
+logger = logging.getLogger(__name__)
 
 skills = [
     "attack","defence","strength","hitpoints","ranged","prayer","magic","cooking","woodcutting","fletching","fishing","firemaking","crafting","smithing","mining","herblore","agility","thieving","slayer","farming","runecraft","hunter","construction"
@@ -20,7 +20,7 @@ class data_class:
         self.skills = skills
 
     def clean(self):
-        logging.debug('Cleaning data')
+        logger.debug('Cleaning data')
         self.df_clean = self.df.copy()
         
         # drop unrelevant columns
@@ -50,7 +50,7 @@ class data_class:
         return self.df_clean
     
     def add_features(self):
-        logging.debug('adding features')
+        logger.debug('adding features')
         if self.df_clean == None:
             self.clean()
         
@@ -75,7 +75,7 @@ class data_class:
         return self.df_clean
 
     def filter_features(self, base:bool=True, feature:bool=True, ratio:bool=True):
-        logging.debug(f'filtering features: {base=}, {feature=}, {ratio=}')
+        logger.debug(f'filtering features: {base=}, {feature=}, {ratio=}')
         
         # input validation
         if not(base or feature or ratio):

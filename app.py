@@ -1,12 +1,15 @@
 import asyncio
 import logging
 
-import requests
-from fastapi import HTTPException, BackgroundTasks
+import aiohttp
+from fastapi import BackgroundTasks, HTTPException
 
+from cogs import requests
 from config import app, detector_api, secret_token, token
 from MachineLearning.data import data_class
 from MachineLearning.model import model
+
+logger = logging.getLogger(__name__)
 
 LABELS = [
     'Real_Player',
@@ -20,7 +23,7 @@ LABELS = [
     'PVM_Ranged_bot',
     'Hunter_bot',
     'Fletching_bot',
-    'Clue_Scroll_bot',
+    # 'Clue_Scroll_bot',
     'LMS_bot',
     'Agility_bot',
     'Wintertodt_bot',
@@ -32,56 +35,20 @@ LABELS = [
     'Cooking_bot',
     'Vorkath_bot',
     'Barrows_bot',
-    'Herblore_bot'
+    'Herblore_bot',
+    'Zulrah_bot'
 ]
 
 ml = model(LABELS)
-
-async def loop_request(base_url, json):
-    '''
-        this function gets all the data of a paginated route
-    '''
-    i, data = 1, []
-
-    while True:
-        # build url
-        url = f'{base_url}&row_count=100000&page={i}'
-
-        # logging
-        logging.debug(f'Request: {url=}')
-
-        # make reqest
-        res = requests.post(url, json=json)
-
-        # escape condition
-        if not res.status_code == 200:
-            logging.debug(f'Break: {res.status_code=}, {url=}')
-            break
-        
-        # parse data
-        res = res.json()
-        data += res
-
-        # escape condition
-        if len(res) == 0:
-            logging.debug(f'Break: {len(res)=}, {url=}')
-            break
-        
-        # logging (after break)
-        logging.debug(f'Succes: {len(res)=}, {len(data)=} {i=}')
-
-        # update iterator
-        i += 1
-    return data
 
 
 async def stage_and_train(token: str):
     # request labels
     url = f'{detector_api}/v1/label?token={token}'
 
-    # logging
-    logging.debug(f'Request: {url=}')
-    data = requests.get(url).json()
+    # logger
+    async with aiohttp.ClientSession() as session:
+        data = await requests.get_request(session, url)
 
     # filter labels
     labels = [d for d in data if d['label'] in LABELS]
@@ -89,51 +56,44 @@ async def stage_and_train(token: str):
     # memory cleanup
     del url, data
 
-    # create an input dict for url
-    label_input = {}
-    label_input['label_id'] = [l['id'] for l in labels]
-    
-    # request all player with label
-    url = f'{detector_api}/v1/player/bulk?token={token}'
-    data = await loop_request(url, label_input)
-
-    # players dict
-    players = data
+    # get players
+    base = f'{detector_api}/v1/player?token={token}'
+    urls = [f'{base}&label_id={label["id"]}' for label in labels]
+    players = await requests.batch_request(urls)
 
     # memory cleanup
-    del url, data
+    del base, urls
 
-    # get all player id's
-    player_input = {}
-    player_input['player_id'] = [int(p['id']) for p in players]
+    # get hiscores
+    base = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
+    urls = [f'{base}&label_id={label["id"]}' for label in labels]
+    hiscores = await requests.batch_request(urls)
 
-    # request hiscore data latest with player_id
-    url = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
-    data = await loop_request(url, player_input)
+    # memory cleanup
+    del base, urls
 
     # hiscores dict
-    hiscores = data_class(data)
-
-    # memory cleanup
-    del url, data
+    hiscores = data_class(hiscores)
 
     ml.train(players, labels, hiscores)
 
-    logging.debug("Preparing to clean training data.")
+    # memory cleanup
     del players, labels, hiscores
-    logging.debug("Training data cleanup completed.")
+    logger.debug('ML trained')
 
     return
 
 async def get_player_hiscores():
-    logging.debug('getting data')
+    logger.debug('getting data')
     url = f'{detector_api}/v1/prediction/data?token={token}&limit=50000'
-    logging.debug(url)
-    data = requests.get(url).json()
+    logger.debug(url)
+    
+    async with aiohttp.ClientSession() as session:
+        data = await requests.get_request(session, url).json()
 
     # if there is no data wait and try to see if there is new data
     if len(data) == 0:
-        logging.debug('no data to predict')
+        logger.debug('no data to predict')
         await asyncio.sleep(600)
         return asyncio.create_task(get_player_hiscores())
 
@@ -146,8 +106,9 @@ async def get_player_hiscores():
 
     # post predictions
     url = f'{detector_api}/v1/prediction?token={token}'
-    logging.debug(url)
-    resp = requests.post(url, json=predictions)
+    logger.debug(url)
+    async with aiohttp.ClientSession() as session:
+        resp = await requests.post_request(session, url, predictions)
 
     print(resp.text)
     return asyncio.create_task(get_player_hiscores())
@@ -162,14 +123,18 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/startup")
-async def manual_startup():
+async def manual_startup(secret:str):
+    #TODO: verify token
+    if secret != secret_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+
     asyncio.create_task(get_player_hiscores())
     return {'ok': 'Predictions have been started.'}
 
 @app.get("/load")
-async def load(token:str):
+async def load(secret:str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     if ml.model is None:
@@ -177,19 +142,18 @@ async def load(token:str):
     return {'ok': 'ok'}
 
 @app.get("/predict")
-async def predict(token:str):
+async def predict(secret:str):
     #TODO: verify token
-    if token != secret_token:
+    if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     return 
 
 @app.get("/train")
-async def train(secret: str, token: str, train_tasks: BackgroundTasks):
-    #TODO: verify token
+async def train(secret: str, token: str, background: BackgroundTasks):
     if secret != secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
-    train_tasks.add_task(stage_and_train, token)
+    background.add_task(stage_and_train, token)
 
     return {'ok': 'Training has begun.'}
