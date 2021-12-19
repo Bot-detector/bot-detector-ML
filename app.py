@@ -1,12 +1,15 @@
 import asyncio
 import logging
 
-import requests
-from fastapi import HTTPException, BackgroundTasks
+import aiohttp
+from fastapi import BackgroundTasks, HTTPException
 
+from cogs import requests
 from config import app, detector_api, secret_token, token
 from MachineLearning.data import data_class
 from MachineLearning.model import model
+
+logger = logging.getLogger(__name__)
 
 LABELS = [
     'Real_Player',
@@ -20,7 +23,7 @@ LABELS = [
     'PVM_Ranged_bot',
     'Hunter_bot',
     'Fletching_bot',
-    'Clue_Scroll_bot',
+    # 'Clue_Scroll_bot',
     'LMS_bot',
     'Agility_bot',
     'Wintertodt_bot',
@@ -38,58 +41,14 @@ LABELS = [
 
 ml = model(LABELS)
 
-#TODO: seperate file for helper functions
-async def loop_request(base_url, json):
-    '''
-        this function gets all the data of a paginated route
-    '''
-    i, data = 1, []
-
-    while True:
-        # build url
-        url = f'{base_url}&row_count=100000&page={i}'
-
-        # logging
-        logging.debug(f'Request: {url=}')
-
-        # make reqest
-        if type == 'get':
-            res = requests.get(url)
-        elif type == 'post':
-            res = requests.post(url, json=json)
-            logging.debug(json)
-        else:
-            raise 'No type specified'
-        
-        # escape condition
-        if not res.status_code == 200:
-            logging.debug(f'Break: {res.status_code=}, {url=}')
-            logging.debug(res.text)
-            break
-        
-        # parse data
-        res = res.json()
-        data += res
-
-        # escape condition
-        if len(res) == 0:
-            logging.debug(f'Break: {len(res)=}, {url=}')
-            break
-        
-        # logging (after break)
-        logging.debug(f'Succes: {len(res)=}, {len(data)=} {i=}')
-
-        # update iterator
-        i += 1
-    return data
 
 async def stage_and_train(token: str):
     # request labels
     url = f'{detector_api}/v1/label?token={token}'
 
-    # logging
-    logging.debug(f'Request: {url=}')
-    data = requests.get(url).json()
+    # logger
+    async with aiohttp.ClientSession() as session:
+        data = await requests.get_request(session, url)
 
     # filter labels
     labels = [d for d in data if d['label'] in LABELS]
@@ -97,57 +56,44 @@ async def stage_and_train(token: str):
     # memory cleanup
     del url, data
 
-    # create an input dict for url
-    players = []
-    for label in labels:
-        url = f'{detector_api}/v1/player?token={token}&label_id={label["id"]}'
-        players.extend(await loop_request(url))
+    # get players
+    base = f'{detector_api}/v1/player?token={token}'
+    urls = [f'{base}&label_id={label["id"]}' for label in labels]
+    players = await requests.batch_request(urls)
 
     # memory cleanup
-    del url
+    del base, urls
 
-    hiscores = []
-    for player in players:
-        url = f'{detector_api}/v1/hiscore/Latest?token={token}&player_id={player["id"]}'
-        hiscores.extend(await loop_request(url))
+    # get hiscores
+    base = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
+    urls = [f'{base}&label_id={label["id"]}' for label in labels]
+    hiscores = await requests.batch_request(urls)
 
+    # memory cleanup
+    del base, urls
 
     # hiscores dict
     hiscores = data_class(hiscores)
 
-    # memory cleanup
-    del url
-
     ml.train(players, labels, hiscores)
 
-    logging.debug("Preparing to clean training data.")
+    # memory cleanup
     del players, labels, hiscores
-    logging.debug("Training data cleanup completed.")
-
-    return
-
-async def batch_function(function, data, batch_size=100):
-    batches = []
-    for i in range(0, len(data), batch_size):
-        logging.debug(f'batch: {function.__name__}, {i}/{len(data)}')
-        batch = data[i:i+batch_size]
-        batches.append(batch)
-
-    await asyncio.gather(*[
-        asyncio.create_task(function(batch)) for batch in batches
-    ])
+    logger.debug('ML trained')
 
     return
 
 async def get_player_hiscores():
-    logging.debug('getting data')
+    logger.debug('getting data')
     url = f'{detector_api}/v1/prediction/data?token={token}&limit=50000'
-    logging.debug(url)
-    data = requests.get(url).json()
+    logger.debug(url)
+    
+    async with aiohttp.ClientSession() as session:
+        data = await requests.get_request(session, url).json()
 
     # if there is no data wait and try to see if there is new data
     if len(data) == 0:
-        logging.debug('no data to predict')
+        logger.debug('no data to predict')
         await asyncio.sleep(600)
         return asyncio.create_task(get_player_hiscores())
 
@@ -160,8 +106,9 @@ async def get_player_hiscores():
 
     # post predictions
     url = f'{detector_api}/v1/prediction?token={token}'
-    logging.debug(url)
-    resp = requests.post(url, json=predictions)
+    logger.debug(url)
+    async with aiohttp.ClientSession() as session:
+        resp = await requests.post_request(session, url, predictions)
 
     print(resp.text)
     return asyncio.create_task(get_player_hiscores())

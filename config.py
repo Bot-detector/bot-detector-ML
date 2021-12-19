@@ -1,5 +1,4 @@
 import logging
-from math import log
 import os
 import sys
 
@@ -32,4 +31,7 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-logging.getLogger('urllib3').setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.DEBUG)
+logging.getLogger("urllib3").setLevel(logging.DEBUG)
+logging.getLogger("uvicorn").setLevel(logging.DEBUG)
+logging.getLogger("uvicorn.error").propagate = False

@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 
 from MachineLearning.data import data_class
 
+logger = logging.getLogger(__name__)
 
 class model:
     save_folder = 'MachineLearning/models'
@@ -25,9 +26,9 @@ class model:
             players: dict=None, 
             labels: dict=None
         ):
-        train = not( None == players == labels)
-        player = players[0] if players else []
-        logging.debug(f'Preprocessing: {train=}, {player=}, {labels=}')
+        train = not(None == players == labels)
+        player, label = players[0], labels[0] if not train else [], []
+        logger.debug(f'Preprocessing:\n {train=},\n {player=},\n {label=}')
         if train:
             # players datafrmae
             df_players = pd.DataFrame(players)
@@ -89,23 +90,23 @@ class model:
     def load(self, name) -> None:
         try:
             path = self.__best_file_path(name)
-            logging.debug(f'{name=}, {path=}')
+            logger.debug(f'{name=}, {path=}')
             object = load(path)
         except Exception as exception:
-            logging.warning(f'Error when loading {name}: {exception=}')
+            logger.warning(f'Error when loading {name}: {exception=}')
             return
         return object
 
     def __save(self, object, name, score):
         #TODO save model & other objects we might need
-        logging.debug('Saving model')
+        logger.debug('Saving model')
         filename = f'{self.save_folder}/{name}_{self.today}_{score}.joblib'
         dump(value=object, filename=filename)
-        logging.debug(f'{filename} saved to {self.save_folder}')
+        logger.debug(f'{filename} saved to {self.save_folder}')
         return
 
     def create_model(self):
-        logging.debug('Creating Model')
+        logger.debug('Creating Model')
         self.model = RandomForestClassifier(n_estimators=300, random_state=7, n_jobs=-1)
         return self.model
     
@@ -123,19 +124,20 @@ class model:
             self.create_model()
 
         # fit model
-        logging.debug('Training Model')
+        logger.debug('Training Model')
         self.model.fit(train_x, train_y)
 
         # evaluate model
-        logging.debug('Scoring Model')
+        logger.debug('Scoring Model')
         score = self.model.score(test_x, test_y)
         score = round(score, 2)
 
-        # logging
-        logging.debug(f'MachineLearning: {score=}')
-        logging.debug(classification_report(test_y, self.model.predict(test_x)))
+        # logger
+        logger.debug(f'MachineLearning: {score=}')
+        logger.debug(classification_report(test_y, self.model.predict(test_x)))
+        
         # save model
-        logging.debug(f"Saving model to {self.save_folder}")
+        logger.debug(f"Saving model to {self.save_folder}")
         self.__save(self.model, 'model', score)
         return # evaluation
 
