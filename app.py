@@ -89,8 +89,8 @@ async def get_player_hiscores():
     logger.debug(url)
     
     async with aiohttp.ClientSession() as session:
-        data = await requests.get_request(session, url).json()
-
+        data = await requests.get_request(session, url)
+        
     # if there is no data wait and try to see if there is new data
     if len(data) == 0:
         logger.debug('no data to predict')
