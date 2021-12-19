@@ -29,7 +29,7 @@ class model:
         train = not(None == players == labels)
 
         player, label = [], []
-        if not train:
+        if train:
             player, label = players[0], labels[0]
         
         logger.debug(f'Preprocessing:\n {train=},\n {player=},\n {label=}')
