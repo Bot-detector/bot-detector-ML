@@ -110,7 +110,6 @@ async def get_player_hiscores():
     async with aiohttp.ClientSession() as session:
         resp = await requests.post_request(session, url, predictions)
 
-    print(resp.text)
     return asyncio.create_task(get_player_hiscores())
 
 # @app.on_event('startup')
