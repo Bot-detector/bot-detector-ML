@@ -57,7 +57,7 @@ async def stage_and_train(token: str):
     del url, data
 
     # get players
-    base = f'{detector_api}/v1/player?token={token}'
+    base = f'{detector_api}/v1/player/bulk?token={token}'
     urls = [f'{base}&label_id={label["id"]}' for label in labels]
     players = await requests.batch_request(urls)
 
