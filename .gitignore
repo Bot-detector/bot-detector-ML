@@ -132,3 +132,4 @@ dmypy.json
 test/
 
 /MachineLearning/models/*
+!/MachineLearning/models/.gitkeep
