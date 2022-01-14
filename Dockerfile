@@ -1,5 +1,5 @@
 #https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
-FROM python:3.9
+FROM python:3.9-slim
 
 COPY ./requirements.txt ./requirements.txt
 
