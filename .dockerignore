@@ -1,7 +1,7 @@
-api\MachineLearning\models\*
+api/MachineLearning/models/*
 .git
 .git*
 LICENSE
 *.md
-venv\*
+venv/*
 *.log
