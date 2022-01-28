@@ -15,25 +15,22 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  setup:
     runs-on: self-hosted
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Set Up Env Variables
-        run: |
-          echo "${{ secrets.API_TOKEN }}" >> .env
-          echo "${{ secrets.API_ENDPOINT }}" >> .env
-          echo "${{ secrets.SECRET_TOKEN}}" >> .env
-
+    - uses: actions/checkout@v2
+    - name: Set Up Env Variables
+      run: |
+        echo "${{ secrets.API_TOKEN }}" >> .env
+        echo "${{ secrets.API_ENDPOINT }}" >> .env
+        echo "${{ secrets.SECRET_TOKEN}}" >> .env
+  
+  build-image:
+    needs: setup
+    runs-on: self-hosted
+    steps:
       - name: Build the Docker image
-        run: docker build . --file Dockerfile -t bot-detector/bd-ml:latest
+        run: docker build . --file Dockerfile --build-arg api_port=6532 --build-arg root_path=/ml -t bot-detector/bd-ml:latest
   
       - name: Tag Image
         run: docker tag bot-detector/bd-ml:latest hub.osrsbotdetector.com/bot-detector/bd-ml:latest
@@ -44,8 +41,12 @@ jobs:
       - name: Push Image to Registry
         run: docker push hub.osrsbotdetector.com/bot-detector/bd-ml:latest
 
+  deploy:
+    needs: build-image
+    runs-on: self-hosted
+    steps:
       - name: Apply Possible Deployment Changes
-        run: kubectl apply -f bd-ml-deploy.yaml
+        run: kubectl apply -f deployment/
 
       - name: Restart Deployment for Possible Container Changes
         run: kubectl rollout restart deploy bd-ml

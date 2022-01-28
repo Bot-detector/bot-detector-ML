@@ -4,6 +4,9 @@ services:
     build:
       context: ../bot-detector-ML
       dockerfile: Dockerfile
+      args:
+        root_path: /
+        api_port: 8000
     image: bot-detector/bd-ml:latest
     env_file:
       - .env
