@@ -1,12 +1,12 @@
-#https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
 FROM python:3.9-slim
 
-COPY ./requirements.txt ./requirements.txt
+WORKDIR /project
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.txt /project/requirements.txt
+RUN pip install -r /project/requirements.txt
 
-COPY . .
+COPY . /project/
+RUN mkdir -p api/MachineLearning/models
 
-RUN mkdir -p MachineLearning/models
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/ml"]
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "6532", "--root-path", "/ml"]

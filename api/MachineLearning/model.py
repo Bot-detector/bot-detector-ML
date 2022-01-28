@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
-from MachineLearning.data import data_class
+from api.MachineLearning.data import data_class
 
 logger = logging.getLogger(__name__)
 

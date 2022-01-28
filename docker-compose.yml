@@ -1,0 +1,13 @@
+version: '3'
+services:
+  machine-learning:
+    build:
+      context: ../bot-detector-ML
+      dockerfile: Dockerfile
+    image: bot-detector/bd-ml:latest
+    env_file:
+      - .env
+    volumes:
+      - ../bot-detector-ML/api/MachineLearning/models:/api/MachineLearning/models
+    ports:
+      - "8000:8000"

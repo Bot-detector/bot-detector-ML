@@ -17,7 +17,7 @@ app = FastAPI()
 
 # setup logging
 logger = logging.getLogger()
-file_handler = logging.FileHandler(filename="./MachineLearning/models/error.log", mode='a')
+file_handler = logging.FileHandler(filename="error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 
 logging.basicConfig(filename='error.log', level=logging.DEBUG)

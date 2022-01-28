@@ -131,4 +131,4 @@ dmypy.json
 
 test/
 
-/MachineLearning/models/*
+api/MachineLearning/models/*

@@ -4,10 +4,12 @@ import logging
 import aiohttp
 from fastapi import BackgroundTasks, HTTPException
 
-from cogs import requests
-from config import app, detector_api, secret_token, token
-from MachineLearning.data import data_class
-from MachineLearning.model import model
+from api import config
+from api.cogs import requests
+from api.MachineLearning.data import data_class
+from api.MachineLearning.model import model
+
+app = config.app
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ ml = model(LABELS)
 
 async def stage_and_train(token: str):
     # request labels
-    url = f'{detector_api}/v1/label?token={token}'
+    url = f'{config.detector_api}/v1/label?token={token}'
 
     # logger
     async with aiohttp.ClientSession() as session:
@@ -57,7 +59,7 @@ async def stage_and_train(token: str):
     del url, data
 
     # get players
-    base = f'{detector_api}/v1/player/bulk?token={token}'
+    base = f'{config.detector_api}/v1/player/bulk?token={token}'
     urls = [f'{base}&label_id={label["id"]}' for label in labels]
     players = await requests.batch_request(urls)
 
@@ -65,7 +67,7 @@ async def stage_and_train(token: str):
     del base, urls
 
     # get hiscores
-    base = f'{detector_api}/v1/hiscore/Latest/bulk?token={token}'
+    base = f'{config.detector_api}/v1/hiscore/Latest/bulk?token={token}'
     urls = [f'{base}&label_id={label["id"]}' for label in labels]
     hiscores = await requests.batch_request(urls)
 
@@ -85,7 +87,7 @@ async def stage_and_train(token: str):
 
 async def get_player_hiscores():
     logger.debug('getting data')
-    url = f'{detector_api}/v1/prediction/data?token={token}&limit=50000'
+    url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit=50000'
     logger.debug(url)
     
     async with aiohttp.ClientSession() as session:
@@ -105,7 +107,7 @@ async def get_player_hiscores():
     predictions = predictions.to_dict(orient='records') # list of dict
 
     # post predictions
-    url = f'{detector_api}/v1/prediction?token={token}'
+    url = f'{config.detector_api}/v1/prediction?token={token}'
     logger.debug(url)
     async with aiohttp.ClientSession() as session:
         resp = await requests.post_request(session, url, predictions)
@@ -124,7 +126,7 @@ async def read_root():
 @app.get("/startup")
 async def manual_startup(secret:str):
     #TODO: verify token
-    if secret != secret_token:
+    if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     asyncio.create_task(get_player_hiscores())
@@ -133,7 +135,7 @@ async def manual_startup(secret:str):
 @app.get("/load")
 async def load(secret:str):
     #TODO: verify token
-    if secret != secret_token:
+    if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     if ml.model is None:
@@ -143,14 +145,14 @@ async def load(secret:str):
 @app.get("/predict")
 async def predict(secret:str):
     #TODO: verify token
-    if secret != secret_token:
+    if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     return 
 
 @app.get("/train")
 async def train(secret: str, token: str, background: BackgroundTasks):
-    if secret != secret_token:
+    if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     background.add_task(stage_and_train, token)
