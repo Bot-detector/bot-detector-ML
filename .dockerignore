@@ -1,4 +1,4 @@
-api/MachineLearning/models/*
+api/MachineLearning/models/*.joblib
 .git
 .git*
 LICENSE
