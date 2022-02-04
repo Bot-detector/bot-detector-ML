@@ -107,7 +107,7 @@ async def get_player_hiscores():
     predictions = predictions.to_dict(orient='records') # list of dict
 
     # post predictions
-    url = f'{config.detector_api}/v1/prediction?token={token}'
+    url = f'{config.detector_api}/v1/prediction?token={config.token}'
     logger.debug(url)
     async with aiohttp.ClientSession() as session:
         resp = await requests.post_request(session, url, predictions)
