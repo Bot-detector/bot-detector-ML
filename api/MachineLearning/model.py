@@ -13,7 +13,7 @@ from api.MachineLearning.data import data_class
 logger = logging.getLogger(__name__)
 
 class model:
-    save_folder = 'MachineLearning/models'
+    save_folder = 'api/MachineLearning/models'
     model = None
     today = int(time.time())
 
