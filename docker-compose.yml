@@ -47,9 +47,9 @@ services:
         api_port: 8000
     image: bot-detector/bd-ml:latest
     environment:
-      - token=mytoken
-      - api=http://127.0.0.1:5000
-      - secret_token=verify_ban 
+      - token=verify_ban
+      - api=http://api:5000
+      - secret_token=super_secret_token 
     volumes:
       - ../bot-detector-ML/api/MachineLearning/models:/api/MachineLearning/models
     ports:
