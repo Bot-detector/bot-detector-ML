@@ -1,5 +1,43 @@
 version: '3'
 services:
+  mysql:
+    build:
+      context: ../bot-detector-mysql
+      dockerfile: Dockerfile
+    image: bot-detector/bd-mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_bot_buster
+      - MYSQL_USER=botssuck
+      - MYSQL_PASSWORD=botdetector
+    volumes:
+      - '../bot-detector-mysql/mount:/var/lib/mysql'
+      - '../bot-detector-mysql/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/'
+    ports:
+      - "3306:3306"
+    networks:
+      - botdetector-network
+
+  api:
+    build:
+      context: ../Bot-Detector-Core-Files
+      dockerfile: Dockerfile
+      args:
+        root_path: /
+        api_port: 5000
+    image: bot-detector/bd-api:latest
+    environment:
+      - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
+      - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
+      - token=verify_ban
+    volumes: 
+      - '../Bot-Detector-Core-Files/api:/code/api'
+    ports:
+      - "5000:5000"
+    networks:
+      - botdetector-network
+    depends_on:
+      - mysql
+
   machine-learning:
     build:
       context: ../bot-detector-ML
@@ -8,9 +46,18 @@ services:
         root_path: /
         api_port: 8000
     image: bot-detector/bd-ml:latest
-    env_file:
-      - .env
+    environment:
+      - token=mytoken
+      - api=http://127.0.0.1:5000
+      - secret_token=verify_ban 
     volumes:
       - ../bot-detector-ML/api/MachineLearning/models:/api/MachineLearning/models
     ports:
       - "8000:8000"
+    networks:
+      - botdetector-network
+    depends_on:
+      - api
+
+networks:
+  botdetector-network:
