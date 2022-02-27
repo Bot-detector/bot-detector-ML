@@ -6,9 +6,6 @@ ENV UVICORN_PORT ${api_port}
 ARG root_path
 ENV UVICORN_ROOT_PATH ${root_path}
 
-ARG reload
-ENV RELOAD ${reload}}
-
 WORKDIR /project
 
 COPY ./requirements.txt /project/requirements.txt
@@ -17,5 +14,5 @@ RUN pip install -r /project/requirements.txt
 COPY . /project/
 RUN mkdir -p api/MachineLearning/models
 
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--reload"]
 # CMD ["sh", "-c" , "uvicorn api.app:app --proxy-headers --host 0.0.0.0 --port ${UVICORN_PORT} --root-path ${UVICORN_ROOT_PATH}"] 

@@ -1,14 +1,16 @@
 import asyncio
 import logging
 import time
+from typing import List
 
-import numpy as np
 import pandas as pd
 import requests
 from fastapi import HTTPException
+from pydantic import BaseModel
 from sklearn.model_selection import train_test_split
 
 from api import config
+from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
 
@@ -20,15 +22,25 @@ binary_classifier = classifier.classifier('binaryClassifier').load()
 multi_classifier = classifier.classifier('multiClassifier').load()
 
 
+class name(BaseModel):
+    id: int
+    name: str
+
+
 @app.on_event('startup')
 async def initial_task():
-
+    global binary_classifier, multi_classifier
+    if binary_classifier is None or multi_classifier is None:
+        binary_classifier = classifier.classifier('binaryClassifier')
+        multi_classifier = classifier.classifier('multiClassifier')
+        await train(config.secret_token)
+    await manual_startup(config.secret_token)
     return
 
 
 @app.get("/")
 async def root():
-    return {"detail": "hello world"}
+    return {"detail": "hello worldz"}
 
 
 @app.get("/startup")
@@ -50,70 +62,21 @@ async def manual_startup(secret: str):
         hiscores = pd.DataFrame(hiscores)
         if len(hiscores) == 0:
             logger.debug('No data: sleeping')
-            time.sleep(60)
+            time.sleep(600)
             continue
 
-        names = hiscores[["Player_id", "name"]].rename(
-            columns={"Player_id": "id"})
+        names = hiscores[
+            ["Player_id", "name"]
+        ].rename(columns={"Player_id": "id"})
         hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
 
-        hiscores = data.hiscoreData(hiscores)
-        hiscores = hiscores.features()
-
-        # binary prediction
-        binary_pred = binary_classifier.predict_proba(hiscores)
-        binary_pred = pd.DataFrame(
-            binary_pred,
-            index=hiscores.index,
-            columns=['Real_Player', 'Unknown_bot']
-        )
-
-        # multi prediction
-        multi_pred = multi_classifier.predict_proba(hiscores)
-        multi_pred = pd.DataFrame(
-            multi_pred, index=hiscores.index, columns=np.unique(config.LABELS)
-        )
-
-        # combine binary & player_pred
-        output = pd.DataFrame(names).set_index("id")
-        output = output.merge(
-            binary_pred, left_index=True, right_index=True, how='left'
-        )
-        output = output.merge(
-            multi_pred, left_index=True, right_index=True, suffixes=['', '_multi'], how="left"
-        )
-
-        # cleanup predictions
-        mask = (output["Real_Player"].isna())
-        output.loc[
-            output["Real_Player"].isna(), "Unknown_bot"
-        ] = output[mask]["Real_Player_multi"]
-
-        output.drop(columns=["Real_Player_multi"], inplace=True)
-        output.fillna(0, inplace=True)
-
-        # add Predictions, Predicted_confidence, created
-        columns = [c for c in output.columns if c != "name"]
-        output['Predicted_confidence'] = round(
-            output[columns].max(axis=1)*100, 2)
-        output["Prediction"] = output[columns].idxmax(axis=1)
-        output["created"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        output.reset_index(inplace=True)
-
-        # cut off name
-        output["name"] = output["name"].astype(str).str[:12]
-
-        # parsing values
-        output[columns] = round(output[columns]*100, 2)
-
-        # post output
-        output = output.to_dict(orient='records')
+        output = predict.predict(
+            hiscores, names, binary_classifier, multi_classifier)
         resp = requests.post(output_url, json=output)
 
         if resp.status_code != 200:
             print(resp.text)
-            time.sleep(60)
-
+            time.sleep(600)
     return {'detail': 'ok'}
 
 
@@ -133,15 +96,17 @@ async def load(secret: str):
 
 
 @app.get("/predict")
-async def predict(secret: str):
+async def predict_player(secret: str, hiscores, name: name) -> List[dict]:
     """
         predict one player
     """
     if secret != config.secret_token:
         raise HTTPException(
             status_code=404, detail=f"insufficient permissions")
-
-    return
+    name = pd.DataFrame(name.dict())
+    output = predict.predict(
+        hiscores, name, binary_classifier, multi_classifier)
+    return output
 
 
 @app.get("/train")
