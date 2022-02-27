@@ -43,7 +43,7 @@ async def manual_startup(secret: str):
 
     while True:
         # endpoint that we are going to use
-        data_url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit=100'
+        data_url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit=50000'
         output_url = f'{config.detector_api}/v1/prediction?token={config.token}'
 
         hiscores = req.request([data_url])
@@ -53,7 +53,8 @@ async def manual_startup(secret: str):
             time.sleep(60)
             continue
 
-        names = hiscores[["id", "name"]]
+        names = hiscores[["Player_id", "name"]].rename(
+            columns={"Player_id": "id"})
         hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
 
         hiscores = data.hiscoreData(hiscores)
@@ -91,15 +92,28 @@ async def manual_startup(secret: str):
         output.drop(columns=["Real_Player_multi"], inplace=True)
         output.fillna(0, inplace=True)
 
-        # add Predictions & Predicted_confidence
+        # add Predictions, Predicted_confidence, created
         columns = [c for c in output.columns if c != "name"]
-        output['Predicted_confidence'] = output[columns].max(axis=1)
+        output['Predicted_confidence'] = round(
+            output[columns].max(axis=1)*100, 2)
         output["Prediction"] = output[columns].idxmax(axis=1)
+        output["created"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        output.reset_index(inplace=True)
+
+        # cut off name
+        output["name"] = output["name"].astype(str).str[:12]
+
+        # parsing values
+        output[columns] = round(output[columns]*100, 2)
 
         # post output
         output = output.to_dict(orient='records')
-        print(output[:2])
-        requests.post(output_url, json=output)
+        resp = requests.post(output_url, json=output)
+
+        if resp.status_code != 200:
+            print(resp.text)
+            time.sleep(60)
+
     return {'detail': 'ok'}
 
 
