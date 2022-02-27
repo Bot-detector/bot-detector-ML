@@ -81,19 +81,18 @@ async def train(secret: str):
 
     # request labels
     labels = requests.request([label_url])
-    logger.debug(labels[:2])
 
     # request players
     player_urls = [
         f'{player_url}&label_id={label["id"]}' for label in labels
-        if label in config.LABELS
+        if label["label"] in config.LABELS
     ]
     players = requests.request(player_urls)
 
     # request hiscore data
     hiscore_urls = [
         f'{hiscore_url}&label_id={label["id"]}' for label in labels
-        if label in config.LABELS
+        if label["label"] in config.LABELS
     ]
     hiscores = requests.request(hiscore_urls)
 

@@ -18,7 +18,7 @@ class classifier(RandomForestClassifier):
         save & load a model
     '''
     path = 'api/MachineLearning/models'
-
+    loaded = False
     def __init__(self, name, **kwargs):
         super().__init__(**kwargs)
         self.name = name
@@ -54,6 +54,7 @@ class classifier(RandomForestClassifier):
         except Exception as exception:
             logger.warning(f'Error when loading {self.name}: {exception}')
             return
+        object.loaded = True
         return object
 
     def save(self) -> None:
@@ -62,16 +63,23 @@ class classifier(RandomForestClassifier):
         joblib.dump(
             self, f"{self.path}/{self.name}_{today}_{round(self.accuracy, 2)}.joblib", compress=3
         )
-
+    
     def score(self, test_y, test_x):
-        labels = np.unique(test_y)
+        labels = np.unique(test_y).tolist()
+        print(labels)
+
         # make predictions
         pred_y = self.predict(test_x)
+        pred_proba_y = self.predict_proba(test_x)
 
+        if len(labels) == 2:
+            pred_proba_y = pred_y# pred_proba_y[:, 1]
+        
         self.accuracy = balanced_accuracy_score(test_y, pred_y)
-        self.roc_auc = roc_auc_score(test_y, self.predict_proba(
-            test_x), labels=labels, multi_class='ovo'
-            )
+        self.roc_auc = roc_auc_score(test_y, pred_proba_y, labels=labels, multi_class='ovo')
+
+        labels = ['Not bot', 'bot'] if len(labels) == 2 else labels
+
         print(
             classification_report(test_y, pred_y, target_names=labels)
         )

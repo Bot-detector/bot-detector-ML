@@ -12,4 +12,5 @@ def request(urls:List) -> List[dict]:
         logger.debug(url)
         data = requests.get(url).json()
         output.extend(data)
+    logger.debug(output[:2])
     return output

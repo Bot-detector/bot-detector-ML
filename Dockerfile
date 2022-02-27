@@ -6,6 +6,9 @@ ENV UVICORN_PORT ${api_port}
 ARG root_path
 ENV UVICORN_ROOT_PATH ${root_path}
 
+ARG reload
+ENV RELOAD ${reload}}
+
 WORKDIR /project
 
 COPY ./requirements.txt /project/requirements.txt
