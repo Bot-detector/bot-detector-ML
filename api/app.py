@@ -1,25 +1,29 @@
+import asyncio
 import logging
+import time
 
+import numpy as np
 import pandas as pd
+import requests
 from fastapi import HTTPException
 from sklearn.model_selection import train_test_split
 
 from api import config
-from api.cogs import requests
+from api.cogs import requests as req
 from api.MachineLearning import classifier, data
 
 logger = logging.getLogger(__name__)
 
 app = config.app
 
-binary_classifier = classifier.classifier('binaryClassifier', n_estimators=300, n_jobs=-1)
-multi_classifier = classifier.classifier('multiClassifier', n_estimators=300, n_jobs=-1)
+binary_classifier = classifier.classifier('binaryClassifier').load()
+multi_classifier = classifier.classifier('multiClassifier').load()
 
 
-# @app.on_event('startup')
-# async def initial_task():
-#     asyncio.create_task(get_player_hiscores())
-#     return
+@app.on_event('startup')
+async def initial_task():
+
+    return
 
 
 @app.get("/")
@@ -32,10 +36,70 @@ async def manual_startup(secret: str):
     """
         start predicting
     """
+    # secret token for api's to talk to eachother
     if secret != config.secret_token:
         raise HTTPException(
             status_code=404, detail=f"insufficient permissions")
 
+    while True:
+        # endpoint that we are going to use
+        data_url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit=100'
+        output_url = f'{config.detector_api}/v1/prediction?token={config.token}'
+
+        hiscores = req.request([data_url])
+        hiscores = pd.DataFrame(hiscores)
+        if len(hiscores) == 0:
+            logger.debug('No data: sleeping')
+            time.sleep(60)
+            continue
+
+        names = hiscores[["id", "name"]]
+        hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
+
+        hiscores = data.hiscoreData(hiscores)
+        hiscores = hiscores.features()
+
+        # binary prediction
+        binary_pred = binary_classifier.predict_proba(hiscores)
+        binary_pred = pd.DataFrame(
+            binary_pred,
+            index=hiscores.index,
+            columns=['Real_Player', 'Unknown_bot']
+        )
+
+        # multi prediction
+        multi_pred = multi_classifier.predict_proba(hiscores)
+        multi_pred = pd.DataFrame(
+            multi_pred, index=hiscores.index, columns=np.unique(config.LABELS)
+        )
+
+        # combine binary & player_pred
+        output = pd.DataFrame(names).set_index("id")
+        output = output.merge(
+            binary_pred, left_index=True, right_index=True, how='left'
+        )
+        output = output.merge(
+            multi_pred, left_index=True, right_index=True, suffixes=['', '_multi'], how="left"
+        )
+
+        # cleanup predictions
+        mask = (output["Real_Player"].isna())
+        output.loc[
+            output["Real_Player"].isna(), "Unknown_bot"
+        ] = output[mask]["Real_Player_multi"]
+
+        output.drop(columns=["Real_Player_multi"], inplace=True)
+        output.fillna(0, inplace=True)
+
+        # add Predictions & Predicted_confidence
+        columns = [c for c in output.columns if c != "name"]
+        output['Predicted_confidence'] = output[columns].max(axis=1)
+        output["Prediction"] = output[columns].idxmax(axis=1)
+
+        # post output
+        output = output.to_dict(orient='records')
+        print(output[:2])
+        requests.post(output_url, json=output)
     return {'detail': 'ok'}
 
 
@@ -48,6 +112,7 @@ async def load(secret: str):
     if secret != config.secret_token:
         raise HTTPException(
             status_code=404, detail=f"insufficient permissions")
+
     binary_classifier = binary_classifier.load()
     multi_classifier = multi_classifier.load()
     return {'detail': 'ok'}
@@ -80,21 +145,21 @@ async def train(secret: str):
     hiscore_url = f'{config.detector_api}/v1/hiscore/Latest/bulk?token={config.token}'
 
     # request labels
-    labels = requests.request([label_url])
+    labels = req.request([label_url])
 
     # request players
     player_urls = [
         f'{player_url}&label_id={label["id"]}' for label in labels
         if label["label"] in config.LABELS
     ]
-    players = requests.request(player_urls)
+    players = req.request(player_urls)
 
     # request hiscore data
     hiscore_urls = [
         f'{hiscore_url}&label_id={label["id"]}' for label in labels
         if label["label"] in config.LABELS
     ]
-    hiscores = requests.request(hiscore_urls)
+    hiscores = req.request(hiscore_urls)
 
     # parse hiscoreData
     hiscoredata = data.hiscoreData(hiscores)
