@@ -26,9 +26,6 @@ spec:
           limits:
             memory: "4500Mi"
             cpu: "2500m"
-          requests:
-            memory: "2500Mi"
-            cpu: "2000m"
         ports:
         - containerPort: 6532
         volumeMounts:
