@@ -32,6 +32,6 @@ spec:
         - containerPort: 6532
         volumeMounts:
         - name: nfs-volume
-          mountPath: /MachineLearning/models
+          mountPath: /api/MachineLearning/models
       imagePullSecrets:
       - name: regcred
