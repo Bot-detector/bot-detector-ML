@@ -14,5 +14,5 @@ RUN pip install -r /project/requirements.txt
 COPY . /project/
 RUN mkdir -p api/MachineLearning/models
 
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--reload"]
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--reload", "--port", "6532", "--root-path", "/ml"]
 # CMD ["sh", "-c" , "uvicorn api.app:app --proxy-headers --host 0.0.0.0 --port ${UVICORN_PORT} --root-path ${UVICORN_ROOT_PATH}"] 
