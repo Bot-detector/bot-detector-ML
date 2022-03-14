@@ -6,5 +6,5 @@ spec:
   selector:
     app: bd-ml
   ports:
-  - protocol: "TCP"
-    port: 6532
+    - protocol: "TCP"
+      port: 6532

@@ -14,22 +14,24 @@ spec:
         app: bd-ml
     spec:
       volumes:
-      - name: nfs-volume
-        nfs: 
-          server: 51.68.207.197
-          path: /cluster/models
-      containers:
-      - name: bd-ml
-        image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
-        imagePullPolicy: Always
-        resources:
-          limits:
-            memory: "3000Mi"
-            cpu: "2000m"
-        ports:
-        - containerPort: 6532
-        volumeMounts:
         - name: nfs-volume
-          mountPath: /api/MachineLearning/models
+          nfs:
+            server: 51.68.207.197
+            path: /cluster/models
+      containers:
+        - name: bd-ml
+          image: hub.osrsbotdetector.com/bot-detector/bd-ml:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: "3000Mi"
+              cpu: "2000m"
+            requests:
+              cpu: 500m
+          ports:
+            - containerPort: 6532
+          volumeMounts:
+            - name: nfs-volume
+              mountPath: /api/MachineLearning/models
       imagePullSecrets:
-      - name: regcred
+        - name: regcred
