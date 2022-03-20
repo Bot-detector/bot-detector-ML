@@ -29,7 +29,7 @@ services:
       - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
       - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
       - token=verify_ban
-    volumes: 
+    volumes:
       - '../Bot-Detector-Core-Files/api:/code/api'
     ports:
       - "5000:5000"
@@ -50,7 +50,7 @@ services:
     environment:
       - token=verify_ban
       - api=http://api:5000
-      - secret_token=super_secret_token 
+      - secret_token=super_secret_token
     volumes:
       - ../bot-detector-ML/api:/project/api
     ports:

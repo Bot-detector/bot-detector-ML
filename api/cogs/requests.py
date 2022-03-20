@@ -6,7 +6,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 # TODO: make this an async function
-def request(urls:List) -> List[dict]:
+def request(urls: List) -> List[dict]:
     output = []
     for url in urls:
         logger.debug(url)

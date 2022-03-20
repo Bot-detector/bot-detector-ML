@@ -51,31 +51,39 @@ async def manual_startup(secret: str):
     # secret token for api's to talk to eachother
     if secret != config.secret_token:
         raise HTTPException(
-            status_code=404, detail=f"insufficient permissions")
+            status_code=404, detail=f"insufficient permissions"
+        )
+
 
     while True:
         # endpoint that we are going to use
-        data_url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit=50000'
+        data_url = f'{config.detector_api}/v1/prediction/data?token={config.token}&limit={config.BATCH_AMOUNT}'
         output_url = f'{config.detector_api}/v1/prediction?token={config.token}'
 
         hiscores = req.request([data_url])
         hiscores = pd.DataFrame(hiscores)
+
         if len(hiscores) == 0:
             logger.debug('No data: sleeping')
             time.sleep(600)
             continue
 
-        names = hiscores[
-            ["Player_id", "name"]
-        ].rename(columns={"Player_id": "id"})
+        names = hiscores[["Player_id", "name"]]
+        names = names.rename(columns={"Player_id": "id"})
         hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
 
         output = predict.predict(
-            hiscores, names, binary_classifier, multi_classifier)
+            hiscores, 
+            names, 
+            binary_classifier, 
+            multi_classifier
+        )
+        
+        logger.debug("Sending response")
         resp = requests.post(output_url, json=output)
 
         if resp.status_code != 200:
-            print(resp.text)
+            print(resp.text[0])
             time.sleep(600)
     return {'detail': 'ok'}
 
