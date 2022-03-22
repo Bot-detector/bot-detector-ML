@@ -14,7 +14,6 @@ def request(urls: List) -> List[dict]:
             data = requests.get(url)
             data = data.json()
         except:
-            print(data.text())
             data = request([url])
         output.extend(data)
     return output
