@@ -10,6 +10,11 @@ def request(urls: List) -> List[dict]:
     output = []
     for url in urls:
         logger.debug(url)
-        data = requests.get(url).json()
+        try:
+            data = requests.get(url)
+            data = data.json()
+        except:
+            print(data.text())
+            data = request([url])
         output.extend(data)
     return output

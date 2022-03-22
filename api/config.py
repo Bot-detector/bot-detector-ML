@@ -63,4 +63,5 @@ LABELS = [
     "Barrows_bot",
     "Herblore_bot",
     "Zulrah_bot",
+    "Unknown_bot"
 ]

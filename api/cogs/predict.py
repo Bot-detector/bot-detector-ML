@@ -48,10 +48,11 @@ def predict(
     )
 
     # cleanup predictions
-    mask = output["Real_Player"].isna()
-    output.loc[output["Real_Player"].isna(), "Unknown_bot"] = output[mask][
-        "Real_Player_multi"
-    ]
+    mask = output["Real_Player"].isna() # all multi class predictions
+    # all multiclass predictions set Unkown_bot value to real_Player_multi value
+    output.loc[
+        output["Real_Player"].isna(), "Unknown_bot"
+    ] = output[mask]["Real_Player_multi"] + output[mask]["Unknown_bot"]
 
     output.drop(columns=["Real_Player_multi"], inplace=True)
     output.fillna(0, inplace=True)
