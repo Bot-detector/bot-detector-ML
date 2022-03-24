@@ -52,7 +52,11 @@ def predict(
     # all multiclass predictions set Unkown_bot value to real_Player_multi value
     output.loc[
         output["Real_Player"].isna(), "Unknown_bot"
-    ] = output[mask]["Real_Player_multi"] + output[mask]["Unknown_bot_multi"]
+    ] = output[mask]["Unknown_bot_multi"]
+
+    output.loc[
+        output["Real_Player"].isna(), "Real_Player"
+    ] = output[mask]["Real_Player_multi"]
 
     output.drop(columns=["Real_Player_multi", "Unknown_bot_multi"], inplace=True)
     output.fillna(0, inplace=True)
