@@ -14,6 +14,7 @@ def predict(
     hiscores = data.hiscoreData(hiscores)
     hiscores = hiscores.features()
 
+    low_level_players = hiscores.query('total < 500000').index
     # binary prediction
     binary_pred = binary_classifier.predict_proba(hiscores)
     binary_pred = pd.DataFrame(
@@ -67,6 +68,9 @@ def predict(
     output["Prediction"] = output[columns].idxmax(axis=1)
     output["created"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
     output.reset_index(inplace=True)
+
+    # low level player predictions are not accurate
+    output.loc[low_level_players, 'Prediction'] = 'Stats Too Low'
 
     # cut off name
     output["name"] = output["name"].astype(str).str[:12]
