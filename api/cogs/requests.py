@@ -1,6 +1,6 @@
 import logging
 from typing import List
-
+import api.config as config
 import requests
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def request(urls: List) -> List[dict]:
     output = []
     for url in urls:
-        logger.debug(url)
+        logger.debug(url.replace(config.token,"***"))
         try:
             data = requests.get(url)
             data = data.json()
