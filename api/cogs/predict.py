@@ -12,9 +12,9 @@ def predict(
     hiscores, names, binary_classifier: classifier, multi_classifier: classifier
 ) -> List[dict]:
     hiscores = data.hiscoreData(hiscores)
+    low_level = hiscores.df_low.index
     hiscores = hiscores.features()
 
-    low_level_players = hiscores.query('total < 500000').index
     # binary prediction
     binary_pred = binary_classifier.predict_proba(hiscores)
     binary_pred = pd.DataFrame(
@@ -49,15 +49,11 @@ def predict(
     )
 
     # cleanup predictions
-    mask = output["Real_Player"].isna() # all multi class predictions
-    # all multiclass predictions set Unkown_bot value to real_Player_multi value
-    output.loc[
-        output["Real_Player"].isna(), "Unknown_bot"
-    ] = output[mask]["Unknown_bot_multi"]
-
-    output.loc[
-        output["Real_Player"].isna(), "Real_Player"
-    ] = output[mask]["Real_Player_multi"]
+    mask = (output["Real_Player"].isna()) # all multi class predictions
+    
+    # cleanup multi suffixes
+    output.loc[mask, "Unknown_bot"] = output[mask]["Unknown_bot_multi"]
+    output.loc[mask, "Real_Player"] = output[mask]["Real_Player_multi"]
 
     output.drop(columns=["Real_Player_multi", "Unknown_bot_multi"], inplace=True)
     output.fillna(0, inplace=True)
@@ -70,7 +66,8 @@ def predict(
     output.reset_index(inplace=True)
 
     # low level player predictions are not accurate
-    output.loc[low_level_players, 'Prediction'] = 'Stats Too Low'
+    mask = (output.index.isin(low_level))
+    output.loc[mask,'Prediction'] = 'Stats Too Low'
 
     # cut off name
     output["name"] = output["name"].astype(str).str[:12]
