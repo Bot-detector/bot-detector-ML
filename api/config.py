@@ -47,7 +47,6 @@ LABELS = [
     "Mining_bot",
     "Crafting_bot",
     "PVM_Ranged_Magic_bot",
-    "PVM_Ranged_bot",
     "Hunter_bot",
     "Fletching_bot",
     "LMS_bot",

@@ -6,31 +6,35 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    balanced_accuracy_score,
-    classification_report,
-    roc_auc_score,
-)
+from sklearn.metrics import (balanced_accuracy_score, classification_report,
+                             roc_auc_score)
 
 logger = logging.getLogger(__name__)
-
 
 class classifier(RandomForestClassifier):
     """
     This class is a wrapper for RandomForestClassifier.
     It adds the ability to save and load the model.
     """
-
     path = "api/MachineLearning/models"
     loaded = False
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, path=None, **kwargs):
+        """
+        Initialize the classifier object.
+        :param path: path to the models
+        :param name: name of the classifier
+        :param kwargs: keyword arguments for RandomForestClassifier
+        """
         super().__init__(**kwargs)
         self.name = name
+        self.path = path if path is not None else self.path
 
-    def __best_file_path(self, startwith):
+    def __best_file_path(self, startwith: str):
         """
-        This method will return the best model path based on accuracy
+        This method will return the best model path based on accuracy.
+        :param startwith: name of the classifier
+        :return: classifier object
         """
         files = []
         for f in os.listdir(self.path):
@@ -51,24 +55,28 @@ class classifier(RandomForestClassifier):
         # array of dict can be used for pandas dataframe
         df_files = pd.DataFrame(files)
         df_files.sort_values(by=["date"], ascending=False, inplace=True)
-        model_path = df_files["path"].iloc[0]
-        return model_path
+        path = df_files["path"].iloc[0]
+        return joblib.load(path)
 
     def load(self):
         """
         Loads the model object from the file.
+        :return: classifier object
         """
         try:
-            path = self.__best_file_path(self.name)
-            logger.debug(f"Loading: {self.name}, {path}")
-            object = joblib.load(path)
+            self = self.__best_file_path(self.name)
+            logger.debug(f"Loading: {self.name}, {self.path}")
         except Exception as exception:
-            logger.warning(f"Error when loading {self.name}: {exception}")
+            logger.warning(f"Error when loading {self.name}: {exception}", exc_info=True)
             return
-        object.loaded = True
-        return object
+        self.loaded = True
+        return self
 
-    def save(self) -> None:
+    def save(self):
+        """
+        Save the classifier object to the file.
+        :return: None
+        """
         logger.debug(f"Saving classifier: {self.name}")
         today = int(time.time())
         joblib.dump(
@@ -77,9 +85,15 @@ class classifier(RandomForestClassifier):
             compress=3,
         )
 
+
     def score(self, test_y, test_x):
+        """
+        Calculate the accuracy and roc_auc score for the classifier.
+        :param test_y: test data labels
+        :param test_x: test data features
+        :return: accuracy and roc_auc score
+        """
         labels = np.unique(test_y).tolist()
-        print(labels)
 
         # make predictions
         pred_y = self.predict(test_x)
@@ -95,5 +109,5 @@ class classifier(RandomForestClassifier):
 
         labels = ["Not bot", "bot"] if len(labels) == 2 else labels
 
-        print(classification_report(test_y, pred_y, target_names=labels))
+        logger.info(classification_report(test_y, pred_y, target_names=labels))
         return self.accuracy, self.roc_auc

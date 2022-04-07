@@ -14,7 +14,7 @@ from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
 
-logger = logging.getLogger(__name__)
+
 
 app = config.app
 
@@ -25,7 +25,7 @@ multi_classifier = classifier.classifier("multiClassifier").load()
 class name(BaseModel):
     id: int
     name: str
-
+logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def initial_task():
@@ -52,6 +52,7 @@ async def root():
 
 @app.get("/startup")
 async def manual_startup(secret: str):
+    logger.debug("manual startup")
     """
         This endpoint is used to manually start the prediction process.
         It is used by the detector api to start the prediction process.
@@ -88,8 +89,10 @@ async def manual_startup(secret: str):
     return {"detail": "ok"}
 
 
+    
 @app.get("/load")
 async def load(secret: str):
+    logger.debug("loading model")
     global binary_classifier, multi_classifier
     """
         load the latest model.
@@ -109,6 +112,7 @@ async def predict_player(secret: str, hiscores, name: name) -> List[dict]:
         predict one player.
         This endpoint is used by the detector api to predict one player.
     """
+    logger.debug(f"predicting player {name}")
     if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
     name = pd.DataFrame(name.dict())
@@ -122,6 +126,7 @@ async def train(secret: str):
         train a new model.
         This endpoint is used by the detector api to train a new model.
     """
+    logger.debug("training model")
     if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
@@ -157,7 +162,6 @@ async def train(secret: str):
     features = hiscoredata.features()
     del hiscoredata
 
-    ###############################################################
     # get players with binary target
     player_data = data.playerData(players, labels).get(binary=True)
 
@@ -176,7 +180,6 @@ async def train(secret: str):
 
     # save the model
     binary_classifier.save()
-    ###############################################################
 
     # get players with multi target
     player_data = data.playerData(players, labels).get(binary=False)
@@ -205,6 +208,4 @@ async def train(secret: str):
 
     # save the model
     multi_classifier.save()
-    ###############################################################
-
     return {"detail": "ok"}

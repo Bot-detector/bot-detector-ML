@@ -7,7 +7,7 @@ import time
 logger = logging.getLogger(__name__)
 
 def request(
-    urls: List[str], retry: int = 3, sleep: int = 1
+    urls: List[str], retry: int = 3, sleep: int = 10
 ) -> List[dict]:
     """
     request data from urls.
@@ -31,4 +31,5 @@ def request(
             else:
                 data = []
         output.extend(data)
+        logger.debug(f"Output size: {len(data)}")
     return output
