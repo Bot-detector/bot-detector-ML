@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 class classifier(RandomForestClassifier):
     """
-    custom wrapper for a machine learning model to consistently
-    save & load a model
+    This class is a wrapper for RandomForestClassifier.
+    It adds the ability to save and load the model.
     """
-
+    
     path = "api/MachineLearning/models"
     loaded = False
 

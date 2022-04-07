@@ -46,10 +46,9 @@ minigames = [
     "soul_wars_zeal",
 ]
 
-
 class hiscoreData:
     """
-    This class is responsible for cleaning data & creating features
+    This class is responsible for cleaning data & creating features.
     """
 
     def __init__(self, data: List[dict]) -> None:
@@ -64,20 +63,33 @@ class hiscoreData:
         self.__boss_ratio()
 
     def __clean(self) -> None:
-        # cleanup
+        """
+        Cleanup the dataframe.
+
+        This method will:
+            - drop unnecessary columns
+            - set the index to the player id
+            - replace -1 with 0
+            - create a list of bosses (not skills or minigames)
+            - create a total level column
+            - create a total boss level column
+            - fill na with 0
+            - create a dataframe with only low level players (total level < 1_000_000)
+        """
         self.df_clean.drop(columns=["id", "timestamp", "ts_date"], inplace=True)
-        # unique index
+        # set index to player id
         self.df_clean.set_index(["Player_id"], inplace=True)
 
-        # if not on the hiscores it shows -1
+        # if not on the hiscores it shows -1, replace with 0
         self.df_clean = self.df_clean.replace(-1, 0)
 
         # bosses
         self.bosses = [
             c for c in self.df_clean.columns if c not in ["total"] + skills + minigames
         ]
-        # total is not always on hiscores
+        # total is not always on hiscores, create a total level column
         self.df_clean["total"] = self.df_clean[self.skills].sum(axis=1)
+        # create a total boss level column
         self.df_clean["boss_total"] = self.df_clean[self.bosses].sum(axis=1)
 
         # fillna
@@ -88,15 +100,32 @@ class hiscoreData:
         self.df_low = self.df_clean[mask].copy()
 
     def __skill_ratio(self):
+        """
+        Create a dataframe with the ratio of each skill to the total level.
+
+        This method will:
+            - create a dataframe with the index of the original dataframe
+            - create a column for each skill with the ratio of the skill to the total level
+            - fill na with 0
+        """
         self.skill_ratio = pd.DataFrame(index=self.df_clean.index)
 
         total = self.df_clean["total"]
+
         for skill in self.skills:
             self.skill_ratio[f"{skill}/total"] = self.df_clean[skill] / total
 
         self.skill_ratio.fillna(0, inplace=True)
 
     def __boss_ratio(self):
+        """
+        Create a dataframe with the ratio of each boss to the total boss level.
+
+        This method will:
+            - create a dataframe with the index of the original dataframe
+            - create a column for each boss with the ratio of the boss to the total boss level
+            - fill na with 0
+        """
         self.boss_ratio = pd.DataFrame(index=self.df_clean.index)
 
         total = self.df_clean["boss_total"]
@@ -108,6 +137,27 @@ class hiscoreData:
     def features(
         self, base: bool = True, skill_ratio: bool = True, boss_ratio: bool = True
     ):
+        """
+        Create a dataframe with the features.
+
+        This method will:
+            - create a dataframe with the index of the original dataframe
+            - merge the original dataframe, the skill ratio dataframe and the boss ratio dataframe
+
+        Parameters
+        ----------
+        base : bool, optional
+            Whether to include the original dataframe, by default True
+        skill_ratio : bool, optional
+            Whether to include the skill ratio dataframe, by default True
+        boss_ratio : bool, optional
+            Whether to include the boss ratio dataframe, by default True
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe containing the features
+        """
         features = pd.DataFrame(index=self.df_clean.index)
         if base:
             features = features.merge(self.df_clean, left_index=True, right_index=True)
@@ -123,13 +173,35 @@ class hiscoreData:
 
 
 class playerData:
+    """
+    Class to handle the data from the json files.
+    """
+
     def __init__(self, player_data: List[dict], label_data: List[dict]) -> None:
+        """
+        Initialize the class.
+
+        Parameters
+        ----------
+        player_data : List[dict]
+            List of dictionaries containing the player data
+        label_data : List[dict]
+            List of dictionaries containing the label data
+        """
         self.df_players = pd.DataFrame(player_data)
         self.df_labels = pd.DataFrame(label_data)
-
         self.__clean()
 
     def __clean(self):
+        """
+        Clean the data.
+
+        This method will:
+            - set the index of the player dataframe to the player id
+            - set the index of the label dataframe to the label id
+            - merge the two dataframes
+            - create a binary label column
+        """
         # clean players
         self.df_players.set_index("id", inplace=True)
 
@@ -148,7 +220,22 @@ class playerData:
         )
 
     def get(self, binary: bool = False):
+        """
+        Get the target data.
 
+        This method will:
+            - return the binary label or the label column
+
+        Parameters
+        ----------
+        binary : bool, optional
+            Whether to return the binary label or not, by default False
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe containing the target data
+        """
         if binary:
             out = self.df_players.loc[:, ["binary_label"]]
             out.rename(columns={"binary_label": "target"}, inplace=True)

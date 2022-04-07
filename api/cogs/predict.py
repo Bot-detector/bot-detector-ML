@@ -7,10 +7,20 @@ from api import config
 from api.MachineLearning import data
 from api.MachineLearning.classifier import classifier
 
-
 def predict(
-    hiscores, names, binary_classifier: classifier, multi_classifier: classifier
+    hiscores, names, binary_classifier: classifier, multi_classifier: classifier,
 ) -> List[dict]:
+    """
+    This function takes in a list of hiscores, a list of names, and two classifiers.
+    It then predicts the probability of each hiscore being a bot or a real player.
+    It then returns a list of dictionaries with the predictions.
+    The predictions are based on the binary classifier, and the multi classifier.
+    The binary classifier is used to predict if the player is a real player or a bot.
+    The multi classifier is used to predict the type of bot.
+    If the binary classifier predicts that the player is a real player, then the multi classifier is not used.
+    If the binary classifier predicts that the player is a bot, then the multi classifier is used to predict the type of bot.
+    The output is a list of dictionaries with the predictions.
+    """
     hiscores = data.hiscoreData(hiscores)
     low_level = hiscores.df_low.index
     hiscores = hiscores.features()
@@ -49,8 +59,8 @@ def predict(
     )
 
     # cleanup predictions
-    mask = (output["Real_Player"].isna()) # all multi class predictions
-    
+    mask = output["Real_Player"].isna()  # all multi class predictions
+
     # cleanup multi suffixes
     output.loc[mask, "Unknown_bot"] = output[mask]["Unknown_bot_multi"]
     output.loc[mask, "Real_Player"] = output[mask]["Real_Player_multi"]
@@ -67,7 +77,7 @@ def predict(
 
     # low level player predictions are not accurate
     mask = (output.index.isin(low_level))
-    output.loc[mask,'Prediction'] = 'Stats Too Low'
+    output.loc[mask, "Prediction"] = "Stats Too Low"
 
     # cut off name
     output["name"] = output["name"].astype(str).str[:12]
