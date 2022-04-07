@@ -20,7 +20,7 @@ class classifier(RandomForestClassifier):
     This class is a wrapper for RandomForestClassifier.
     It adds the ability to save and load the model.
     """
-    
+
     path = "api/MachineLearning/models"
     loaded = False
 
@@ -29,6 +29,9 @@ class classifier(RandomForestClassifier):
         self.name = name
 
     def __best_file_path(self, startwith):
+        """
+        This method will return the best model path based on accuracy
+        """
         files = []
         for f in os.listdir(self.path):
             if f.endswith(".joblib") and f.startswith(startwith):
@@ -52,6 +55,9 @@ class classifier(RandomForestClassifier):
         return model_path
 
     def load(self):
+        """
+        Loads the model object from the file.
+        """
         try:
             path = self.__best_file_path(self.name)
             logger.debug(f"Loading: {self.name}, {path}")
