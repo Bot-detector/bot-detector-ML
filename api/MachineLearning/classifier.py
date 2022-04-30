@@ -16,9 +16,8 @@ class classifier(RandomForestClassifier):
     This class is a wrapper for RandomForestClassifier.
     It adds the ability to save and load the model.
     """
-    workingDirectory = os.path.dirname(os.path.realpath(__file__))
-    
-    path = os.path.join(workingDirectory, "models")
+    working_directory = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(working_directory, "models")
     if not os.path.exists(path):
         os.makedirs(path)
     loaded = False
