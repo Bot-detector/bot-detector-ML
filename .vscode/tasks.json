@@ -1,0 +1,60 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		// docker compose
+		{
+			"type": "docker-compose",
+			"label": "docker-compose up",
+			"dockerCompose": {
+				"up": {
+					"detached": false,
+					"build": true
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml"
+				]
+			}
+		},
+		// build docker image
+		{
+			"type":"docker-build",
+			"label": "docker-build",
+			"dockerBuild": {
+				"context": "${workspaceFolder}",
+				"dockerfile": "${workspaceFolder}/Dockerfile",
+				"tag": "bd-ml:latest"
+			}
+		},
+		// run docker image
+		{
+			"type": "docker-run",
+			"label": "docker-run",
+			"dependsOn":["docker-build"],
+			"dockerRun": {
+				"containerName": "bd-ml",
+				"image": "bd-ml:latest",
+				"env": {
+				},
+				"volumes": [{
+					"containerPath": "/project/api",
+					"localPath": "./api"
+				}],
+				"ports": [{
+					"containerPort": 8000,
+					"hostPort": 8000
+				}]
+			},
+			// the command docker-run has to send
+			"python": {
+				"args": ["api.app:app","--host=0.0.0.0","--port=8000"],
+				"module": "uvicorn"
+			},
+		},
+		{
+			"type": "shell",
+			"label": "docker-clean-run",
+			"dependsOn":["docker-run"],
+			"command":["docker", "system", "prune","-a", "-f"]
+		}
+	]
+}

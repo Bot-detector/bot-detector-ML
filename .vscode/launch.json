@@ -1,0 +1,81 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: FastAPI",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "api.app:app"
+            ],
+            "jinja": true,
+            "justMyCode": true
+        },
+        // does not have debugger
+        {
+            "name": "docker-compose",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-compose up",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+                "projectType":"fastapi"
+            },
+            "dockerServerReadyAction": {
+                "action": "openExternally",
+                "pattern": "Running on (http?://\\S+|[0-9]+)",
+                "uriFormat": "%s://localhost:%s/"
+            }
+        },
+        // has debugger
+        {
+            "name": "docker debug",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run",
+            "python": {
+                "projectType": "fastapi",
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+            },
+            "dockerServerReadyAction": {
+                "action": "openExternally",
+                "pattern": "Running on (http?://\\S+|[0-9]+)",
+                "uriFormat": "%s://localhost:%s/"
+            }
+        },
+        {
+            "name": "docker debug & clean",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-clean-run",
+            "python": {
+                "projectType": "fastapi",
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+            },
+            "dockerServerReadyAction": {
+                "action": "openExternally",
+                "pattern": "Running on (http?://\\S+|[0-9]+)",
+                "uriFormat": "%s://localhost:%s/"
+            }
+        }
+    ]
+}
