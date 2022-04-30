@@ -16,7 +16,11 @@ class classifier(RandomForestClassifier):
     This class is a wrapper for RandomForestClassifier.
     It adds the ability to save and load the model.
     """
-    path = "api/MachineLearning/models"
+    workingDirectory = os.path.dirname(os.path.realpath(__file__))
+    
+    path = os.path.join(workingDirectory, "models")
+    if not os.path.exists(path):
+        os.makedirs(path)
     loaded = False
 
     def __init__(self, name, path=None, **kwargs):
@@ -43,8 +47,9 @@ class classifier(RandomForestClassifier):
                 model_file = f.replace(".joblib", "")
                 model_file = model_file.split(sep="_")
                 # save to dict
+                logger.debug(f"joined path: {os.path.join(self.path, f)}")
                 d = {
-                    "path": f"{self.path}/{f}",
+                    "path": os.path.join(self.path, f),
                     "model": model_file[0],
                     "date": model_file[1],
                     "accuracy": model_file[2],
