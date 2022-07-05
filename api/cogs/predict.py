@@ -92,8 +92,12 @@ def predict(
 
     # low level player predictions are not accurate
     logger.debug(f"Removing low level players for players")
-    mask = (output.index.isin(low_level))
-    output.loc[mask, "Prediction"] = "Stats Too Low"
+
+    mask = output['id'].isin(low_level)
+    output.loc[mask, "Prediction"] = "Stats_Too_Low"
+
+    l = len(output[output["Prediction"] == "Stats_Too_Low"])
+    logger.debug(f"Len low level players {l}")
 
     # cut off name
     output["name"] = output["name"].astype(str).str[:12]
