@@ -1,5 +1,7 @@
 import logging
 from typing import List
+
+from urllib3 import Retry
 import api.config as config
 import requests
 import time
@@ -20,16 +22,26 @@ def request(
     output = []
     for url in urls:
         logger.debug(url.replace(config.token, "***"))
-        try:
-            data = requests.get(url)
-            data = data.json()
-        except Exception as e:
-            logger.exception(e)
+
+        resp = requests.get(url)
+        retrying = False
+        if resp.ok:
+            try:
+                data = resp.json()
+            except Exception as e:
+                logger.exception(e)
+                retrying = True
+        else:
+            logger.error(f"received status: {resp.status_code}")
+            retrying = True
+
+        if retrying:
             if retry > 0:
                 time.sleep(sleep)
                 data = request([url], retry - 1, sleep)
             else:
                 data = []
+
         output.extend(data)
         logger.debug(f"Output size: {len(data)}")
     return output
