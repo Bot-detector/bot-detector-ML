@@ -222,6 +222,10 @@ class playerData:
         # clean players
         self.df_players.set_index("id", inplace=True)
 
+        # reduce memory of player dataframe
+        small_size_columns = ["possible_ban", "confirmed_ban", "confirmed_player", "label_id", "label_jagex"]
+        self.df_players[small_size_columns] = self.df_players[small_size_columns].astype(np.int8)
+
         # clean labels
         self.df_labels.set_index("id", inplace=True)
 
@@ -254,10 +258,10 @@ class playerData:
             Dataframe containing the target data
         """
         if binary:
-            out = self.df_players.loc[:, ["binary_label"]]
+            out = self.df_players.loc[:, ["binary_label"]].astype(np.int8)
             out.rename(columns={"binary_label": "target"}, inplace=True)
         else:
-            out = self.df_players.loc[:, ["label"]]
+            out = self.df_players.loc[:, ["label"]].astype("category")
             out.rename(columns={"label": "target"}, inplace=True)
 
         return out
