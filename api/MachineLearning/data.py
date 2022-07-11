@@ -46,6 +46,7 @@ minigames = [
     "soul_wars_zeal",
 ]
 
+
 class hiscoreData:
     """
     This class is responsible for cleaning data & creating features.
@@ -71,8 +72,9 @@ class hiscoreData:
             - set the index to the player id
             - replace -1 with 0
             - create a list of bosses (not skills or minigames)
-            - create a total level column
-            - create a total boss level column
+            - create a total xp column
+            - create a total boss kc column
+            - reduces memory of dataframe
             - fill na with 0
             - create a dataframe with only low level players (total level < 1_000_000)
         """
@@ -87,13 +89,24 @@ class hiscoreData:
         self.bosses = [
             c for c in self.df_clean.columns if c not in ["total"] + skills + minigames
         ]
-        # total is not always on hiscores, create a total level column
+        # total is not always on hiscores, create a total xp column
         self.df_clean["total"] = self.df_clean[self.skills].sum(axis=1)
-        # create a total boss level column
-        self.df_clean["boss_total"] = self.df_clean[self.bosses].sum(axis=1)
+
+        # create a total boss kc column
+        self.df_clean["boss_total"] = (
+            self.df_clean[self.bosses].sum(axis=1).astype(np.int32)
+        )
 
         # fillna
         self.df_clean.fillna(0, inplace=True)
+
+        # apply smaller data types to reduce memory usage
+        non_total_features = [
+            col for col in self.df_clean.columns if "total" not in col
+        ]
+        self.df_clean[non_total_features] = self.df_clean[non_total_features].astype(
+            np.int32
+        )
 
         # get low lvl players
         mask = self.df_clean["total"] < 1_000_000
@@ -113,7 +126,9 @@ class hiscoreData:
         total = self.df_clean["total"]
 
         for skill in self.skills:
-            self.skill_ratio[f"{skill}/total"] = self.df_clean[skill] / total
+            self.skill_ratio[f"{skill}/total"] = (self.df_clean[skill] / total).astype(
+                np.float16
+            )
 
         self.skill_ratio.fillna(0, inplace=True)
 
@@ -130,7 +145,9 @@ class hiscoreData:
 
         total = self.df_clean["boss_total"]
         for boss in self.bosses:
-            self.boss_ratio[f"{boss}/total"] = self.df_clean[boss] / total
+            self.boss_ratio[f"{boss}/total"] = (self.df_clean[boss] / total).astype(
+                np.float16
+            )
 
         self.boss_ratio.fillna(0, inplace=True)
 
@@ -205,6 +222,18 @@ class playerData:
         # clean players
         self.df_players.set_index("id", inplace=True)
 
+        # reduce memory of player dataframe
+        small_size_columns = [
+            "possible_ban",
+            "confirmed_ban",
+            "confirmed_player",
+            "label_id",
+            "label_jagex",
+        ]
+        self.df_players[small_size_columns] = self.df_players[
+            small_size_columns
+        ].astype(np.int8)
+
         # clean labels
         self.df_labels.set_index("id", inplace=True)
 
@@ -237,10 +266,10 @@ class playerData:
             Dataframe containing the target data
         """
         if binary:
-            out = self.df_players.loc[:, ["binary_label"]]
+            out = self.df_players.loc[:, ["binary_label"]].astype(np.int8)
             out.rename(columns={"binary_label": "target"}, inplace=True)
         else:
-            out = self.df_players.loc[:, ["label"]]
+            out = self.df_players.loc[:, ["label"]].astype("category")
             out.rename(columns={"label": "target"}, inplace=True)
 
         return out

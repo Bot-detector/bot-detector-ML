@@ -15,7 +15,6 @@ from api.cogs import requests as req
 from api.MachineLearning import classifier, data
 
 
-
 app = config.app
 
 binary_classifier = classifier.classifier("binaryClassifier").load()
@@ -25,13 +24,16 @@ multi_classifier = classifier.classifier("multiClassifier").load()
 class name(BaseModel):
     id: int
     name: str
+
+
 logger = logging.getLogger(__name__)
+
 
 @app.on_event("startup")
 async def initial_task():
     """
-        This function is called when the api starts up.
-        It will load the latest model and start the prediction process.
+    This function is called when the api starts up.
+    It will load the latest model and start the prediction process.
     """
     global binary_classifier, multi_classifier
     if binary_classifier is None or multi_classifier is None:
@@ -45,7 +47,7 @@ async def initial_task():
 @app.get("/")
 async def root():
     """
-        This endpoint is used to check if the api is running.
+    This endpoint is used to check if the api is running.
     """
     return {"detail": "hello worldz"}
 
@@ -89,7 +91,6 @@ async def manual_startup(secret: str):
     return {"detail": "ok"}
 
 
-    
 @app.get("/load")
 async def load(secret: str):
     logger.debug("loading model")
@@ -109,8 +110,8 @@ async def load(secret: str):
 @app.get("/predict")
 async def predict_player(secret: str, hiscores, name: name) -> List[dict]:
     """
-        predict one player.
-        This endpoint is used by the detector api to predict one player.
+    predict one player.
+    This endpoint is used by the detector api to predict one player.
     """
     logger.debug(f"predicting player {name}")
     if secret != config.secret_token:
@@ -123,8 +124,8 @@ async def predict_player(secret: str, hiscores, name: name) -> List[dict]:
 @app.get("/train")
 async def train(secret: str):
     """
-        train a new model.
-        This endpoint is used by the detector api to train a new model.
+    train a new model.
+    This endpoint is used by the detector api to train a new model.
     """
     logger.debug("training model")
     if secret != config.secret_token:
