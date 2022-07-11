@@ -223,8 +223,16 @@ class playerData:
         self.df_players.set_index("id", inplace=True)
 
         # reduce memory of player dataframe
-        small_size_columns = ["possible_ban", "confirmed_ban", "confirmed_player", "label_id", "label_jagex"]
-        self.df_players[small_size_columns] = self.df_players[small_size_columns].astype(np.int8)
+        small_size_columns = [
+            "possible_ban",
+            "confirmed_ban",
+            "confirmed_player",
+            "label_id",
+            "label_jagex",
+        ]
+        self.df_players[small_size_columns] = self.df_players[
+            small_size_columns
+        ].astype(np.int8)
 
         # clean labels
         self.df_labels.set_index("id", inplace=True)
