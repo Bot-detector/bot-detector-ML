@@ -45,7 +45,7 @@ git clone https://github.com/Bot-detector/bot-detector-ML.git
 4. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
 ```
 cd Bot-Detector-Core-Files
-docker-compose up -d
+docker-compose up --build
 ```
 5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
 6. Test the api's: 
