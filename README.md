@@ -73,3 +73,4 @@ adding /docs at the end will give return the swagger documentation for the compo
 
 ### contributing
 To contribute you must fork a repository, if you followed the setup step, fork the repository in the `bot-detector\local` folder.
+
