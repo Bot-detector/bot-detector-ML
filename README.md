@@ -41,15 +41,35 @@ git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 ```
+4. Now you can start the project. **Make sure docker desktop is running!**
 
-4. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
+Creating the database. (you can skip this step if the database is already created) (**this might take a while**)
+```
+cd bot-detector-mysql
+docker-compose up --build
+```
+In the terminal you will now see `/usr/sbin/mysqld: ready for connections.`
+The database has been created, you can now stop the database
+```
+ctrl+c
+```
+You can now create the necessary containers:
+if you just want to run the mysql + api
 ```
 cd Bot-Detector-Core-Files
-docker-compose up -d
+docker-compose up --build
 ```
-5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
+if you want to run the mysql + api + ml
+```
+cd Bot-Detector-Core-ML
+docker-compose up --build
+```
+
 6. Test the api's: 
     * Core api: ```http://localhost:5000/```
     * Machine learning: ```http://localhost:8000/```
 
 adding /docs at the end will give return the swagger documentation for the components `/docs`
+
+### contributing
+To contribute you must fork a repository, if you followed the setup step, fork the repository in the `bot-detector\local` folder.
