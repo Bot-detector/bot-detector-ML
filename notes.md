@@ -42,7 +42,5 @@ powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '>=', 
 # branch cleanup
 if your branch gets out of sync and for some reason you have many pushes and pulls, to become insync without pushing some random changes do this
 ```
-git fetch origin
-git reset --hard origin/{branchname}
-git clean -f -d
+git fetch https://github.com/Bot-detector/bot-detector-ML.git
 ``` 
