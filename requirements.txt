@@ -17,7 +17,7 @@ hpack==4.0.0
 hypercorn==0.13.1
 hyperframe==6.0.1
 idna==3.3
-joblib==1.1.0
+joblib==1.2.0
 multidict==5.2.0
 numpy==1.22.0
 pandas==1.3.5
