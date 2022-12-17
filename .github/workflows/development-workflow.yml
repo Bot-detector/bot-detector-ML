@@ -10,16 +10,16 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set Up ENV
       run: |
-          echo "${{ secrets.API_TOKEN }}" >> .env
-          echo "${{ secrets.API_ENDPOINT }}" >> .env
-          echo "${{ secrets.SECRET_TOKEN}}" >> .env
+          echo "${{ secrets.API_TOKEN }}" >> ./api/.env
+          echo "${{ secrets.API_ENDPOINT }}" >> ./api/.env
+          echo "${{ secrets.SECRET_TOKEN}}" >> ./api/.env
 
   build-image:
     needs: setup
     runs-on: self-hosted
     steps:
     - name: Build the Docker image
-      run: docker build . --file Dockerfile -t bot-detector/bd-ml:latest --build-arg api_port=6532 --build-arg root_path=/ml
+      run: docker build . --file Dockerfile -t bot-detector/bd-ml:latest --build-arg api_port=6532 --build-arg root_path=/ml --target production
 
     - name: Tag Image
       run: docker tag bot-detector/bd-ml:latest hub.osrsbotdetector.com/bot-detector/bd-ml:latest
