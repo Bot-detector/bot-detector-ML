@@ -37,24 +37,22 @@ services:
       - botdetector-network
     depends_on:
       - mysql
-
   machine-learning:
     build:
-      context: ../bot-detector-ML
+      context: .
       dockerfile: Dockerfile
+      target: base
       args:
-        root_path: ''
+        root_path: '/'
         api_port: 8000
-        reload: 1
-    image: bot-detector/bd-ml:latest
-    environment:
-      - token=verify_ban
-      - api=http://api:5000
-      - secret_token=super_secret_token
+    container_name: bd-ml
+    command: uvicorn api.app:app --host 0.0.0.0 --reload --reload-include api/*
+    env_file:
+      - .env
     volumes:
       - ../bot-detector-ML/api:/project/api
     ports:
-      - "8000:8000"
+      - 8000:8000
     networks:
       - botdetector-network
     depends_on:
