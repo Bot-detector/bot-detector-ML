@@ -147,8 +147,15 @@ async def post_prediction(data: list[dict]):
     while True:
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(url=url, params=params, data=data) as resp:
+                async with session.post(url=url, params=params, json=data) as resp:
                     if not resp.ok:
+                        error_message = (
+                            f"response status {resp.status} "
+                            f"response body: {await resp.text()}"
+                        )
+                        # Log the error message and raise a ValueError
+                        logger.error(error_message)
+                        await asyncio.sleep(15)
                         continue
                     break
         except Exception as e:
