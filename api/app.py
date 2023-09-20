@@ -13,7 +13,7 @@ from api import config
 from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
-
+import aiohttp
 
 app = config.app
 
@@ -64,16 +64,12 @@ async def manual_startup(secret: str):
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
     while True:
-        # endpoint that we are going to use
-        data_url = f"{config.detector_api}/v1/prediction/data?token={config.token}&limit={config.BATCH_AMOUNT}"
-        output_url = f"{config.detector_api}/v1/prediction?token={config.token}"
-
-        hiscores = req.request([data_url])
+        hiscores = await req.get_prediction_data()
         hiscores = pd.DataFrame(hiscores)
 
         if len(hiscores) == 0:
             logger.debug("No data: sleeping")
-            time.sleep(600)
+            await asyncio.sleep(60)
             continue
 
         names = hiscores[["Player_id", "name"]]
@@ -83,11 +79,7 @@ async def manual_startup(secret: str):
         output = predict.predict(hiscores, names, binary_classifier, multi_classifier)
 
         logger.debug("Sending response")
-        resp = requests.post(output_url, json=output)
-
-        if resp.status_code != 200:
-            print(resp.text[0])
-            time.sleep(600)
+        await req.post_prediction(output)
     return {"detail": "ok"}
 
 
@@ -131,29 +123,19 @@ async def train(secret: str):
     if secret != config.secret_token:
         raise HTTPException(status_code=404, detail=f"insufficient permissions")
 
-    # api endpoints
-    label_url = f"{config.detector_api}/v1/label?token={config.token}"
-    player_url = f"{config.detector_api}/v1/player/bulk?token={config.token}"
-    hiscore_url = f"{config.detector_api}/v1/hiscore/Latest/bulk?token={config.token}"
+    labels = await req.get_labels()
+    players = []
+    hiscores = []
 
-    # request labels
-    labels = req.request([label_url])
+    for label in labels:
+        if not label["label"] in config.LABELS:
+            continue
 
-    # request players
-    player_urls = [
-        f'{player_url}&label_id={label["id"]}'
-        for label in labels
-        if label["label"] in config.LABELS
-    ]
-    players = req.request(player_urls)
+        player_data = await req.get_player_data(label_id=label["id"])
+        players.extend(player_data)
 
-    # request hiscore data
-    hiscore_urls = [
-        f'{hiscore_url}&label_id={label["id"]}'
-        for label in labels
-        if label["label"] in config.LABELS
-    ]
-    hiscores = req.request(hiscore_urls)
+        hiscore_data = await req.get_hiscore_data(label_id=label["id"])
+        hiscores.extend(hiscore_data)
 
     # parse hiscoreData
     hiscoredata = data.hiscoreData(hiscores)
