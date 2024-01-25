@@ -62,5 +62,7 @@ LABELS = [
     "Barrows_bot",
     "Herblore_bot",
     "Zulrah_bot",
-    "Unknown_bot"
+    "Unknown_bot",
+    "Gauntlet_bot",
+    "Nex_bot",
 ]
