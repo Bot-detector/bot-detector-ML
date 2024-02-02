@@ -14,6 +14,7 @@ from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
 import aiohttp
+from datetime import date
 
 app = config.app
 
@@ -61,10 +62,17 @@ async def manual_startup(secret: str):
     """
     # secret token for api's to talk to eachother
     if secret != config.secret_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        raise HTTPException(status_code=404, detail="insufficient permissions")
 
+    id = 0
+    today = date.today()
     while True:
-        hiscores = await req.get_prediction_data()
+        if today != date.today():
+            logger.info("new day")
+            id, today = 0, date.today()
+
+        hiscores = await req.get_prediction_data(id=id, limit=config.BATCH_AMOUNT)
+        id = hiscores[-1].get("id")
         hiscores = pd.DataFrame(hiscores)
 
         if len(hiscores) == 0:
@@ -80,6 +88,11 @@ async def manual_startup(secret: str):
 
         logger.debug("Sending response")
         await req.post_prediction(output)
+
+        if len(hiscores) < config.BATCH_AMOUNT:
+            sleep=60
+            logger.info(f"{len(hiscores)=} < {config.BATCH_AMOUNT=}, sleeping: {sleep}")
+            await asyncio.sleep(sleep)
     return {"detail": "ok"}
 
 

@@ -132,9 +132,14 @@ async def get_hiscore_data(label_id):
     return hiscores
 
 
-async def get_prediction_data():
+async def get_prediction_data(id:int=0, limit:int=0):
     url = f"{config.detector_api}/v1/prediction/data"
-    params = {"token": config.token, "limit": config.BATCH_AMOUNT}
+    url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest" #TODO: fix hardcoded
+    params = {
+        "player_id":id,
+        "many": True,
+        "limit": limit
+    }
 
     data = await retry_request(url=url, params=params)
     return data
