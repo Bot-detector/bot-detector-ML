@@ -24,12 +24,12 @@ def predict(
     If the binary classifier predicts that the player is a bot, then the multi classifier is used to predict the type of bot.
     The output is a list of dictionaries with the predictions.
     """
-    logger.debug(f"Predicting hiscores for players")
+    logger.debug("Predicting hiscores for players")
     hiscores = data.hiscoreData(hiscores)
     low_level = hiscores.df_low.index
     hiscores = hiscores.features()
 
-    logger.debug(f"Predicting binary for players")
+    logger.debug("Predicting binary for players")
     # binary prediction
     binary_pred = binary_classifier.predict_proba(hiscores)
     binary_pred = pd.DataFrame(
@@ -37,27 +37,27 @@ def predict(
     )
 
     # multi prediction
-    logger.debug(f"Predicting multi for players")
+    logger.debug("Predicting multi for players")
     multi_pred = multi_classifier.predict_proba(hiscores)
     multi_pred = pd.DataFrame(
         multi_pred, index=hiscores.index, columns=np.unique(config.LABELS)
     )
     
     # remove real players from multi
-    logger.debug(f"Removing real players from multi for players")
+    logger.debug("Removing real players from multi for players")
     real_players = binary_pred.query("Real_Player > 0.5").index
     mask = ~(multi_pred.index.isin(real_players))
     multi_pred = multi_pred[mask]
     
 
     # remove bots from real players
-    logger.debug(f"Removing bots from binary for players")
+    logger.debug("Removing bots from binary for players")
     bots = multi_pred.index
     mask = ~(binary_pred.index.isin(bots))
     binary_pred = binary_pred[mask]
 
     # combine binary & player_pred
-    logger.debug(f"Combining binary and multi for players")
+    logger.debug("Combining binary and multi for players")
     output = pd.DataFrame(names).set_index("id")
     output = output.merge(binary_pred, left_index=True, right_index=True, how="left")
 
@@ -71,7 +71,7 @@ def predict(
 
     
     # cleanup predictions
-    logger.debug(f"Cleaning up predictions for players")
+    logger.debug("Cleaning up predictions for players")
     mask = output["Real_Player"].isna()  # all multi class predictions
 
     
@@ -83,7 +83,7 @@ def predict(
     output.fillna(0, inplace=True)
 
     # add Predictions, Predicted_confidence, created
-    logger.debug(f"Adding Predictions, Predicted_confidence, created for players")
+    logger.debug("Adding Predictions, Predicted_confidence, created for players")
     columns = [c for c in output.columns if c != "name"]
     output["Predicted_confidence"] = round(output[columns].max(axis=1) * 100, 2)
     output["Prediction"] = output[columns].idxmax(axis=1)
@@ -91,7 +91,7 @@ def predict(
     output.reset_index(inplace=True)
 
     # low level player predictions are not accurate
-    logger.debug(f"Removing low level players for players")
+    logger.debug("Removing low level players for players")
 
     mask = output['id'].isin(low_level)
     output.loc[mask, "Prediction"] = "Stats_Too_Low"

@@ -1,10 +1,8 @@
 import asyncio
 import logging
-import time
 from typing import List
 
 import pandas as pd
-import requests
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sklearn.model_selection import train_test_split
@@ -13,7 +11,6 @@ from api import config
 from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
-import aiohttp
 from datetime import date
 
 app = config.app
@@ -90,7 +87,7 @@ async def manual_startup(secret: str):
         await req.post_prediction(output)
 
         if len(hiscores) < config.BATCH_AMOUNT:
-            sleep=60
+            sleep = 60
             logger.info(f"{len(hiscores)=} < {config.BATCH_AMOUNT=}, sleeping: {sleep}")
             await asyncio.sleep(sleep)
     return {"detail": "ok"}
@@ -105,7 +102,7 @@ async def load(secret: str):
         This endpoint is used by the detector api to load the latest model.
     """
     if secret != config.secret_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        raise HTTPException(status_code=404, detail="insufficient permissions")
 
     binary_classifier = binary_classifier.load()
     multi_classifier = multi_classifier.load()
@@ -120,7 +117,7 @@ async def predict_player(secret: str, hiscores, name: name) -> List[dict]:
     """
     logger.debug(f"predicting player {name}")
     if secret != config.secret_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        raise HTTPException(status_code=404, detail="insufficient permissions")
     name = pd.DataFrame(name.dict())
     output = predict.predict(hiscores, name, binary_classifier, multi_classifier)
     return output
@@ -134,14 +131,14 @@ async def train(secret: str):
     """
     logger.debug("training model")
     if secret != config.secret_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions")
+        raise HTTPException(status_code=404, detail="insufficient permissions")
 
     labels = await req.get_labels()
     players = []
     hiscores = []
 
     for label in labels:
-        if not label["label"] in config.LABELS:
+        if label["label"] not in config.LABELS:
             continue
 
         player_data = await req.get_player_data(label_id=label["id"])
