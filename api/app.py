@@ -68,10 +68,12 @@ async def manual_startup(secret: str):
             logger.info("new day")
             id, today = 0, date.today()
 
-        hiscores = await req.get_prediction_data(id=id, limit=config.BATCH_AMOUNT)
+        hiscores = await req.get_prediction_data(
+            player_id=id, limit=config.BATCH_AMOUNT
+        )
         _highscores = hiscores[-1]
         logger.info(_highscores)
-        id = _highscores.get("id")
+        id = _highscores.get("Player_id")
         hiscores = pd.DataFrame(hiscores)
 
         if len(hiscores) == 0:

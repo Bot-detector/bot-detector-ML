@@ -96,7 +96,7 @@ async def get_player_data(label_id: int, limit: int = 5000):
 
 async def get_hiscore_data(label_id: int, limit: int = 5000):
     url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest"  # TODO: fix hardcoded
-    params = {"player_id": 1, "many": 1, "limit": limit}
+    params = {"player_id": 1, "label_id": label_id, "many": 1, "limit": limit}
 
     # Initialize a list to store hiscore data
     hiscores = []
@@ -113,14 +113,14 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
             break
 
         # Increment the page parameter for the next request
-        params["player_id"] = data[-1]["id"]
+        params["player_id"] = data[-1]["Player_id"]
 
     return hiscores
 
 
-async def get_prediction_data(id: int = 0, limit: int = 0):
+async def get_prediction_data(player_id: int = 0, limit: int = 0):
     url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest"  # TODO: fix hardcoded
-    params = {"player_id": id, "many": 1, "limit": limit}
+    params = {"player_id": player_id, "many": 1, "limit": limit}
 
     data = await retry_request(url=url, params=params)
     return data
