@@ -13,7 +13,7 @@ async def make_request(url: str, params: dict, headers: dict = {}) -> list[dict]
     _secure_params["token"] = "***"
 
     # Log the URL and secure parameters for debugging
-    logger.info({"url": url, "params": _secure_params})
+    logger.info({"url": url.split("/v")[-1], "params": _secure_params})
 
     # Use aiohttp to make an asynchronous GET request
     async with aiohttp.ClientSession() as session:

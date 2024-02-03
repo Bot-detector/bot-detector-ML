@@ -78,7 +78,11 @@ class hiscoreData:
             - fill na with 0
             - create a dataframe with only low level players (total level < 1_000_000)
         """
-        self.df_clean.drop(columns=["id", "timestamp", "ts_date"], inplace=True)
+        col_to_drop = ["id", "timestamp", "ts_date", "name"]
+        col_to_drop = [c for c in self.df_clean.columns if c in col_to_drop]
+        logger.info(f"dropping: {col_to_drop}")
+        self.df_clean.drop(columns=col_to_drop, inplace=True)
+
         # set index to player id
         self.df_clean.set_index(["Player_id"], inplace=True)
 
