@@ -96,7 +96,7 @@ async def get_player_data(label_id: int, limit: int = 5000):
 
 async def get_hiscore_data(label_id: int, limit: int = 5000):
     url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest"  # TODO: fix hardcoded
-    params = {"player_id": id, "many": 1, "limit": limit}
+    params = {"player_id": 1, "many": 1, "limit": limit}
 
     # Initialize a list to store hiscore data
     hiscores = []
