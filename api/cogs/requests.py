@@ -64,18 +64,14 @@ async def get_labels():
     return data
 
 
-# Define an asynchronous function to get player data for a specific label ID
-async def get_player_data(label_id):
-    # Initialize pagination parameters
-    page = 1
-    row_count = 5000
-    url = f"{config.detector_api}/v1/player/bulk"
+async def get_player_data(label_id: int, limit: int = 5000):
+    url = "http://private-api-svc.bd-prd.svc:5000/v2/player"
 
     params = {
-        "token": config.token,
-        "page": page,
-        "row_count": row_count,
+        "player_id": 1,
         "label_id": label_id,
+        "greater_than": 1,
+        "limit": limit,
     }
 
     # Initialize a list to store player data
@@ -89,28 +85,18 @@ async def get_player_data(label_id):
         logger.info(f"received: {len(data)}, in total {len(players)}")
 
         # Check if the received data is less than the row count, indicating the end of data
-        if len(data) < row_count:
+        if len(data) < limit:
             break
 
         # Increment the page parameter for the next request
-        params["page"] += 1
+        params["player_id"] = data[-1]["id"]
 
     return players
 
 
-# Define an asynchronous function to get hiscore data for a specific label ID
-async def get_hiscore_data(label_id):
-    # Initialize pagination parameters
-    page = 1
-    row_count = 5000
-    url = f"{config.detector_api}/v1/hiscore/Latest/bulk"
-
-    params = {
-        "token": config.token,
-        "page": page,
-        "row_count": row_count,
-        "label_id": label_id,
-    }
+async def get_hiscore_data(label_id: int, limit: int = 5000):
+    url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest"  # TODO: fix hardcoded
+    params = {"player_id": id, "many": 1, "limit": limit}
 
     # Initialize a list to store hiscore data
     hiscores = []
@@ -123,23 +109,18 @@ async def get_hiscore_data(label_id):
         logger.info(f"received: {len(data)}, in total {len(hiscores)}")
 
         # Check if the received data is less than the row count, indicating the end of data
-        if len(data) < row_count:
+        if len(data) < limit:
             break
 
         # Increment the page parameter for the next request
-        params["page"] += 1
+        params["player_id"] = data[-1]["id"]
 
     return hiscores
 
 
-async def get_prediction_data(id:int=0, limit:int=0):
-    url = f"{config.detector_api}/v1/prediction/data"
-    url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest" #TODO: fix hardcoded
-    params = {
-        "player_id":id,
-        "many": 1,
-        "limit": limit
-    }
+async def get_prediction_data(id: int = 0, limit: int = 0):
+    url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest"  # TODO: fix hardcoded
+    params = {"player_id": id, "many": 1, "limit": limit}
 
     data = await retry_request(url=url, params=params)
     return data

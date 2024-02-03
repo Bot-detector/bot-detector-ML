@@ -10,8 +10,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def predict(
-    hiscores, names, binary_classifier: classifier, multi_classifier: classifier,
+    hiscores,
+    names,
+    binary_classifier: classifier,
+    multi_classifier: classifier,
 ) -> List[dict]:
     """
     This function takes in a list of hiscores, a list of names, and two classifiers.
@@ -42,13 +46,12 @@ def predict(
     multi_pred = pd.DataFrame(
         multi_pred, index=hiscores.index, columns=np.unique(config.LABELS)
     )
-    
+
     # remove real players from multi
     logger.debug("Removing real players from multi for players")
     real_players = binary_pred.query("Real_Player > 0.5").index
     mask = ~(multi_pred.index.isin(real_players))
     multi_pred = multi_pred[mask]
-    
 
     # remove bots from real players
     logger.debug("Removing bots from binary for players")
@@ -69,12 +72,10 @@ def predict(
         how="left",
     )
 
-    
     # cleanup predictions
     logger.debug("Cleaning up predictions for players")
     mask = output["Real_Player"].isna()  # all multi class predictions
 
-    
     # cleanup multi suffixes
     output.loc[mask, "Unknown_bot"] = output[mask]["Unknown_bot_multi"]
     output.loc[mask, "Real_Player"] = output[mask]["Real_Player_multi"]
@@ -93,11 +94,11 @@ def predict(
     # low level player predictions are not accurate
     logger.debug("Removing low level players for players")
 
-    mask = output['id'].isin(low_level)
+    mask = output["id"].isin(low_level)
     output.loc[mask, "Prediction"] = "Stats_Too_Low"
 
-    l = len(output[output["Prediction"] == "Stats_Too_Low"])
-    logger.debug(f"Len low level players {l}")
+    len_too_low_players = len(output[output["Prediction"] == "Stats_Too_Low"])
+    logger.debug(f"Len low level players {len_too_low_players}")
 
     # cut off name
     output["name"] = output["name"].astype(str).str[:12]
