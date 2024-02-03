@@ -137,7 +137,7 @@ async def get_prediction_data(id:int=0, limit:int=0):
     url = "http://private-api-svc.bd-prd.svc:5000/v2/highscore/latest" #TODO: fix hardcoded
     params = {
         "player_id":id,
-        "many": True,
+        "many": 1,
         "limit": limit
     }
 
