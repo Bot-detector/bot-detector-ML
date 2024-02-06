@@ -35,7 +35,11 @@ async def make_request(url: str, params: dict, headers: dict = {}) -> list[dict]
 
 # Define an asynchronous function to retry a request until it succeeds or raise an exception on failure
 async def retry_request(url: str, params: dict) -> list[dict]:
+    max_retry = 3
+    retry = 0
     while True:
+        if max_retry == retry:
+            break
         try:
             # Attempt to make the request
             data = await make_request(url, params)
@@ -49,6 +53,7 @@ async def retry_request(url: str, params: dict) -> list[dict]:
             _secure_params["token"] = "***"
             logger.error({"url": url, "params": _secure_params, "error": str(e)})
             await asyncio.sleep(15)
+            retry += 1
 
 
 # Define an asynchronous function to get labels from an API
