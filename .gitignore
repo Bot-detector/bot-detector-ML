@@ -132,3 +132,5 @@ test/
 
 api/MachineLearning/models/*
 test.py
+
+training/data/*.csv
