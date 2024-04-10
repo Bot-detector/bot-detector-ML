@@ -136,14 +136,28 @@ class hiscoreData:
         # fillna
         self.df_clean.fillna(0, inplace=True)
 
-        # apply smaller data types to reduce memory usage
+        # Print the data types of the columns before the conversion
+        print("Data types before the conversion:")
+        print(self.df_clean.dtypes)
+
+        # Define the non-total features
         non_total_features = [
-            col for col in self.df_clean.columns if "total" not in col
+            col
+            for col in self.df_clean.columns
+            if "total" not in col
+            and col not in ["created_at", "record_date", "skills", "activity"]
         ]
-        # stuck here for now
-        self.df_clean[non_total_features] = self.df_clean[non_total_features].astype(
-            np.int32
-        )
+
+        # Try to convert the non-total features to int32 and print the column name if it fails
+        for col in non_total_features:
+            try:
+                self.df_clean[col] = self.df_clean[col].astype(np.int32)
+            except ValueError:
+                print(f"Cannot convert column {col} to int32")
+
+        # Print the data types of the columns after the conversion
+        print("\nData types after the conversion:")
+        print(self.df_clean.dtypes)
 
         # get low lvl players
         mask = self.df_clean["total"] < 1_000_000
@@ -158,34 +172,59 @@ class hiscoreData:
             - create a column for each skill with the ratio of the skill to the total level
             - fill na with 0
         """
+        # Initialize the 'skill_ratio' attribute as an empty DataFrame
         self.skill_ratio = pd.DataFrame(index=self.df_clean.index)
 
+        # Expand the 'skills' list into separate columns
+        df_skills = self.df_clean["skills"].apply(pd.Series)
+
+        # Get the total values
         total = self.df_clean["total"]
 
-        for skill in self.skills:
-            self.skill_ratio[f"{skill}/total"] = (self.df_clean[skill] / total).astype(
-                np.float16
-            )
+        # Calculate the skill ratio for each skill
+        for skill in df_skills.columns:
+            # Calculate the skill ratio
+            skill_ratio = df_skills[skill] / total
 
+            # Convert the skill ratio to float16
+            skill_ratio_float = skill_ratio.astype(np.float16)
+
+            # Assign the skill ratio series to a new column in the skill_ratio DataFrame
+            self.skill_ratio[f"{skill}/total"] = skill_ratio_float
+
+        # Fill NA values with 0
         self.skill_ratio.fillna(0, inplace=True)
 
     def __boss_ratio(self):
         """
-        Create a dataframe with the ratio of each boss to the total boss level.
+        Create a dataframe with the ratio of each boss to the total activity.
 
         This method will:
             - create a dataframe with the index of the original dataframe
-            - create a column for each boss with the ratio of the boss to the total boss level
+            - create a column for each boss with the ratio of the boss to the total activity
             - fill na with 0
         """
+        # Initialize the 'boss_ratio' attribute as an empty DataFrame
         self.boss_ratio = pd.DataFrame(index=self.df_clean.index)
 
-        total = self.df_clean["boss_total"]
-        for boss in self.bosses:
-            self.boss_ratio[f"{boss}/total"] = (self.df_clean[boss] / total).astype(
-                np.float16
-            )
+        # Expand the 'activity' list into separate columns
+        df_bosses = self.df_clean["activity"].apply(pd.Series)
 
+        # Get the total activity values
+        total = self.df_clean["total"]
+
+        # Calculate the boss ratio for each boss
+        for boss in df_bosses.columns:
+            # Calculate the boss ratio
+            boss_ratio = df_bosses[boss] / total
+
+            # Convert the boss ratio to float16
+            boss_ratio_float = boss_ratio.astype(np.float16)
+
+            # Assign the boss ratio series to a new column in the boss_ratio DataFrame
+            self.boss_ratio[f"{boss}/total"] = boss_ratio_float
+
+        # Fill NA values with 0
         self.boss_ratio.fillna(0, inplace=True)
 
     def features(
