@@ -83,8 +83,8 @@ services:
     environment:
       - token=verify_ban
       - secret_token=super_secret_token
-      - private_api=http://private_api:5000
-      - detector_api=http://core_api:5000
+      - private_api=http://private_api:5000/v1
+      - detector_api=http://core_api:5000/v3
     volumes:
       - ./api:/project/api
     ports:

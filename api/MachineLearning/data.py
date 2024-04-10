@@ -84,7 +84,7 @@ class hiscoreData:
         self.df_clean.drop(columns=col_to_drop, inplace=True)
 
         # set index to player id
-        self.df_clean.set_index(["Player_id"], inplace=True)
+        self.df_clean.set_index(["player_id"], inplace=True)
 
         # if not on the hiscores it shows -1, replace with 0
         self.df_clean = self.df_clean.replace(-1, 0)
@@ -93,13 +93,45 @@ class hiscoreData:
         self.bosses = [
             c for c in self.df_clean.columns if c not in ["total"] + skills + minigames
         ]
-        # total is not always on hiscores, create a total xp column
-        self.df_clean["total"] = self.df_clean[self.skills].sum(axis=1)
+        # Print the list of skills
+        print(f"Skills: {self.skills}")
 
+        # Expand the 'skills' list into separate columns
+        df_skills = self.df_clean["skills"].apply(pd.Series)
+
+        # Print the first few rows of the new DataFrame
+        print(df_skills.head())
+
+        # Calculate the sum of each row
+        total = df_skills.sum(axis=1)
+
+        # Print the first few rows of the total series
+        print(total.head())
+
+        # Assign the total series to the 'total' column in the original DataFrame
+        self.df_clean["total"] = total
         # create a total boss kc column
-        self.df_clean["boss_total"] = (
-            self.df_clean[self.bosses].sum(axis=1).astype(np.int32)
-        )
+
+        # Print the list of bosses
+        print(f"Bosses: {self.bosses}")
+
+        # Expand the 'activity' list into separate columns
+        df_activity = self.df_clean["activity"].apply(pd.Series)
+
+        # Print the first few rows of the new DataFrame
+        print(df_activity.head())
+
+        # Calculate the sum of each row
+        activity_total = df_activity.sum(axis=1)
+
+        # Print the first few rows of the activity_total series
+        print(activity_total.head())
+
+        # Assign the activity_total series to the 'activity_total' column in the original DataFrame
+        self.df_clean["activity_total"] = activity_total
+
+        # Assign the boss_total_int series to the 'boss_total' column in the original DataFrame
+        self.df_clean["boss_total"] = activity_total
 
         # fillna
         self.df_clean.fillna(0, inplace=True)
@@ -108,6 +140,7 @@ class hiscoreData:
         non_total_features = [
             col for col in self.df_clean.columns if "total" not in col
         ]
+        # stuck here for now
         self.df_clean[non_total_features] = self.df_clean[non_total_features].astype(
             np.int32
         )

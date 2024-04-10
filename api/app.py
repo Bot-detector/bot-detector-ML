@@ -4,14 +4,13 @@ from datetime import date
 from typing import List
 
 import pandas as pd
-from fastapi import HTTPException
-from pydantic import BaseModel
-from sklearn.model_selection import train_test_split
-
 from api import config
 from api.cogs import predict
 from api.cogs import requests as req
 from api.MachineLearning import classifier, data
+from fastapi import HTTPException
+from pydantic import BaseModel
+from sklearn.model_selection import train_test_split
 
 app = config.app
 
@@ -73,7 +72,7 @@ async def manual_startup(secret: str):
         )
         _highscores = hiscores[-1]
         logger.info(_highscores)
-        id = _highscores.get("Player_id")
+        id = _highscores.get("player_id")
         hiscores = pd.DataFrame(hiscores)
 
         if len(hiscores) == 0:
@@ -81,8 +80,8 @@ async def manual_startup(secret: str):
             await asyncio.sleep(60)
             continue
 
-        names = hiscores[["Player_id", "name"]]
-        names = names.rename(columns={"Player_id": "id"})
+        names = hiscores[["player_id"]]
+        names = names.rename(columns={"player_id": "id"})
         hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
 
         output = predict.predict(hiscores, names, binary_classifier, multi_classifier)
@@ -183,13 +182,27 @@ async def train(secret: str):
 
     # merge features with target
     features_labeled = features.merge(player_data, left_index=True, right_index=True)
+    # Get the last column from the DataFrame
+    last_column = features_labeled.iloc[:, -1]
 
-    # we need at least 100 users
-    to_little_data_labels = (
-        pd.DataFrame(features_labeled.iloc[:, -1].value_counts())
-        .query("target < 100")
-        .index
-    )
+    # Convert non-numeric values to NaN
+    last_column_numeric = pd.to_numeric(last_column, errors="coerce")
+
+    # Replace NaN values with 0
+    last_column_numeric_filled = last_column_numeric.fillna(0)
+
+    # Convert the series to an integer data type
+    last_column_numeric_int = last_column_numeric_filled.astype(int)
+
+    # Count the number of occurrences of each value
+    value_counts = last_column_numeric_int.value_counts()
+
+    # Convert the Series to a DataFrame
+    value_counts_df = pd.DataFrame(value_counts)
+
+    # Filter the DataFrame to get the labels with less than 100 occurrences
+    to_little_data_labels = value_counts_df.query("target < 100").index
+
     mask = ~(features_labeled["target"].isin(to_little_data_labels))
     features_labeled = features_labeled[mask]
 
