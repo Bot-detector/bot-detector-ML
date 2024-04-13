@@ -81,7 +81,14 @@ async def manual_startup(secret: str):
             await asyncio.sleep(60)
             continue
 
-        names = hiscores[["Player_id", "name"]]
+        # Check if the "name" column exists in the DataFrame
+        if "name" in hiscores.columns:
+            # Create the 'names' DataFrame
+            names = hiscores[["Player_id", "name"]]
+        else:
+            # Create an empty 'name' column
+            hiscores["name"] = ""
+            names = hiscores[["Player_id", "name"]]
         names = names.rename(columns={"Player_id": "id"})
         hiscores = hiscores[[c for c in hiscores.columns if c != "name"]]
 
