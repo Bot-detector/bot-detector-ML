@@ -36,23 +36,29 @@ async def make_request(url: str, params: dict, headers: dict = {}) -> list[dict]
 async def retry_request(url: str, params: dict) -> list[dict]:
     max_retry = 3
     retry = 0
+    # Log the error and wait for 15 seconds before retrying
+    _secure_params = params.copy()
+    _secure_params["token"] = "***"
     while True:
         if max_retry == retry:
+            logger.warning(
+                {"url": url, "params": _secure_params, "error": "Max Retries"}
+            )
             break
         try:
             # Attempt to make the request
             data = await make_request(url, params)
 
             # If data is received, return it
-            if data:
+            if data is not None:
                 return data
+
         except Exception as e:
-            # Log the error and wait for 15 seconds before retrying
-            _secure_params = params.copy()
-            _secure_params["token"] = "***"
             logger.error({"url": url, "params": _secure_params, "error": str(e)})
+
         await asyncio.sleep(15)
         retry += 1
+    return []
 
 
 # Define an asynchronous function to get labels from an API
