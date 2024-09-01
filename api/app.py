@@ -184,6 +184,8 @@ async def train(secret: str):
     # merge features with target
     features_labeled = features.merge(player_data, left_index=True, right_index=True)
 
+    print(pd.DataFrame(features_labeled.iloc[:, -1].value_counts()))
+
     # we need at least 100 users
     to_little_data_labels = (
         pd.DataFrame(features_labeled.iloc[:, -1].value_counts())
