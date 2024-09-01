@@ -4,6 +4,7 @@ import logging
 import aiohttp
 
 import api.config as config
+from api.models import ScraperDataV3, HighscoreData
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +115,17 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
     # Continue making requests until all data is retrieved
     while True:
         data = await retry_request(url=url, params=params)
-        hiscores.extend(data)
+        for d in data:
+            scraper_data = ScraperDataV3(**d)
+            skills = {r.skill_name: r.skill_value for r in scraper_data.skills}
+            activities = {
+                r.activity_name: r.activity_value for r in scraper_data.activities
+            }
+            hiscores.append(
+                HighscoreData(
+                    **skills, **activities, Player_id=scraper_data.player_id
+                ).model_dump()
+            )
 
         logger.info(f"received: {len(data)}, in total {len(hiscores)}")
 
