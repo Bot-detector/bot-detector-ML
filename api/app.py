@@ -185,14 +185,14 @@ async def train(secret: str):
     features_labeled = features.merge(player_data, left_index=True, right_index=True)
 
     print(pd.DataFrame(features_labeled.iloc[:, -1].value_counts()))
+    # Count occurrences of each category in the target column
+    target_counts = features_labeled["target"].value_counts()
 
-    # we need at least 100 users
-    to_little_data_labels = (
-        pd.DataFrame(features_labeled.iloc[:, -1].value_counts())
-        .query("target < 100")
-        .index
-    )
-    mask = ~(features_labeled["target"].isin(to_little_data_labels))
+    # Filter categories with fewer than 100 occurrences
+    to_little_data_labels = target_counts[target_counts < 100].index
+
+    # Apply the mask to filter out those categories
+    mask = ~features_labeled["target"].isin(to_little_data_labels)
     features_labeled = features_labeled[mask]
 
     # create train test data
