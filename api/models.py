@@ -19,12 +19,14 @@ class ScraperDataV3(BaseModel):
     record_date: date
     scraper_id: int
     player_id: int
+    player_name: str
     skills: list[Skill]
     activities: list[Activity]
 
 
 class HighscoreData(BaseModel):
     Player_id: int
+    name: str
     attack: Optional[int] = 0
     defence: Optional[int] = 0
     strength: Optional[int] = 0

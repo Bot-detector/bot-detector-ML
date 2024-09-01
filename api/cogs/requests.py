@@ -115,6 +115,7 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
     # Continue making requests until all data is retrieved
     while True:
         data = await retry_request(url=url, params=params)
+
         for d in data:
             scraper_data = ScraperDataV3(**d)
             skills = {r.skill_name: r.skill_value for r in scraper_data.skills}
@@ -123,7 +124,10 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
             }
             hiscores.append(
                 HighscoreData(
-                    **skills, **activities, Player_id=scraper_data.player_id
+                    **skills,
+                    **activities,
+                    Player_id=scraper_data.player_id,
+                    name=scraper_data.player_name,
                 ).model_dump()
             )
 
@@ -144,6 +148,21 @@ async def get_prediction_data(player_id: int = 0, limit: int = 0):
     params = {"player_id": player_id, "many": 1, "limit": limit}
 
     data = await retry_request(url=url, params=params)
+    hiscores = []
+    for d in data:
+        scraper_data = ScraperDataV3(**d)
+        skills = {r.skill_name: r.skill_value for r in scraper_data.skills}
+        activities = {
+            r.activity_name: r.activity_value for r in scraper_data.activities
+        }
+        hiscores.append(
+            HighscoreData(
+                **skills,
+                **activities,
+                Player_id=scraper_data.player_id,
+                name=scraper_data.player_name,
+            ).model_dump()
+        )
     return data
 
 
