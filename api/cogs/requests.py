@@ -163,7 +163,7 @@ async def get_prediction_data(player_id: int = 0, limit: int = 0):
                 name=scraper_data.player_name,
             ).model_dump()
         )
-    return data
+    return hiscores
 
 
 async def post_prediction(data: list[dict]):

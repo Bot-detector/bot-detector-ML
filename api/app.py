@@ -73,6 +73,7 @@ async def manual_startup(secret: str):
         )
         _highscores = hiscores[-1]
         logger.info(_highscores)
+
         id = _highscores.get("Player_id")
         hiscores = pd.DataFrame(hiscores)
 
@@ -80,6 +81,8 @@ async def manual_startup(secret: str):
             logger.debug("No data: sleeping")
             await asyncio.sleep(60)
             continue
+
+        print(hiscores.head(1))
 
         names = hiscores[["Player_id", "name"]]
         names = names.rename(columns={"Player_id": "id"})
