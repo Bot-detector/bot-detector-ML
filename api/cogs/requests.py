@@ -138,7 +138,17 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
             break
 
         # Increment the page parameter for the next request
-        params["player_id"] = data[-1]["Player_id"]
+        last_record = data[-1]
+        if not isinstance(last_record, dict):
+            logger.error(f"expected dict but got {type(last_record)}, {last_record=}")
+            break
+
+        last_player_id = data.get("Player_id", None)
+        if last_player_id is None:
+            logger.error(f"expected int but got None, {last_record=}")
+            break
+
+        params["player_id"] = last_player_id
 
     return hiscores
 
