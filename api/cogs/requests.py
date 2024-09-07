@@ -105,59 +105,7 @@ async def get_player_data(label_id: int, limit: int = 5000):
     return players
 
 
-async def get_hiscore_data(label_id: int, limit: int = 5000):
-    url = f"{config.private_api}/v3/highscore/latest"
-    params = {"player_id": 1, "label_id": label_id, "many": 1, "limit": limit}
-
-    # Initialize a list to store hiscore data
-    hiscores = []
-
-    # Continue making requests until all data is retrieved
-    while True:
-        data = await retry_request(url=url, params=params)
-
-        for d in data:
-            scraper_data = ScraperDataV3(**d)
-            skills = {r.skill_name: r.skill_value for r in scraper_data.skills}
-            activities = {
-                r.activity_name: r.activity_value for r in scraper_data.activities
-            }
-            hiscores.append(
-                HighscoreData(
-                    **skills,
-                    **activities,
-                    Player_id=scraper_data.player_id,
-                    name=scraper_data.player_name,
-                ).model_dump()
-            )
-
-        logger.info(f"received: {len(data)}, in total {len(hiscores)}")
-
-        # Check if the received data is less than the row count, indicating the end of data
-        if len(data) < limit:
-            break
-
-        # Increment the page parameter for the next request
-        last_record = data[-1]
-        if not isinstance(last_record, dict):
-            logger.error(f"expected dict but got {type(last_record)}, {last_record=}")
-            break
-
-        last_player_id = last_record.get("Player_id", None)
-        if last_player_id is None:
-            logger.error(f"expected int but got None, {last_record=}")
-            break
-
-        params["player_id"] = last_player_id
-
-    return hiscores
-
-
-async def get_prediction_data(player_id: int = 0, limit: int = 0):
-    url = f"{config.private_api}/v3/highscore/latest"
-    params = {"player_id": player_id, "many": 1, "limit": limit}
-
-    data = await retry_request(url=url, params=params)
+def parse_hs_data(data: list[ScraperDataV3]) -> list[HighscoreData]:
     hiscores = []
     for d in data:
         scraper_data = ScraperDataV3(**d)
@@ -171,8 +119,47 @@ async def get_prediction_data(player_id: int = 0, limit: int = 0):
                 **activities,
                 Player_id=scraper_data.player_id,
                 name=scraper_data.player_name,
-            ).model_dump()
+            )
         )
+    return hiscores
+
+
+async def get_hiscore_data(label_id: int, limit: int = 5000):
+    url = f"{config.private_api}/v3/highscore/latest"
+    params = {"player_id": 1, "label_id": label_id, "many": 1, "limit": limit}
+
+    # Initialize a list to store hiscore data
+    hiscores = []
+
+    # Continue making requests until all data is retrieved
+    while True:
+        data = await retry_request(url=url, params=params)
+        data = [ScraperDataV3(**d) for d in data]
+        _hiscores = parse_hs_data(data=data)
+        _hiscores = [h.model_dump() for h in _hiscores]
+        hiscores.extend(_hiscores)
+
+        logger.info(f"received: {len(data)}, in total {len(hiscores)}")
+
+        # Check if the received data is less than the row count, indicating the end of data
+        if len(data) < limit:
+            break
+
+        # Increment the page parameter for the next request
+        last_record = data[-1]
+        params["player_id"] = last_record.player_id
+
+    return hiscores
+
+
+async def get_prediction_data(player_id: int = 0, limit: int = 0):
+    url = f"{config.private_api}/v3/highscore/latest"
+    params = {"player_id": player_id, "many": 1, "limit": limit}
+
+    data = await retry_request(url=url, params=params)
+    data = [ScraperDataV3(**d) for d in data]
+    hiscores = parse_hs_data(data=data)
+    hiscores = [h.model_dump() for h in hiscores]
     return hiscores
 
 
