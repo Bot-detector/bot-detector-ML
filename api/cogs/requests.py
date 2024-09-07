@@ -108,17 +108,14 @@ async def get_player_data(label_id: int, limit: int = 5000):
 def parse_hs_data(data: list[ScraperDataV3]) -> list[HighscoreData]:
     hiscores = []
     for d in data:
-        scraper_data = ScraperDataV3(**d)
-        skills = {r.skill_name: r.skill_value for r in scraper_data.skills}
-        activities = {
-            r.activity_name: r.activity_value for r in scraper_data.activities
-        }
+        skills = {r.skill_name: r.skill_value for r in d.skills}
+        activities = {r.activity_name: r.activity_value for r in d.activities}
         hiscores.append(
             HighscoreData(
                 **skills,
                 **activities,
-                Player_id=scraper_data.player_id,
-                name=scraper_data.player_name,
+                Player_id=d.player_id,
+                name=d.player_name,
             )
         )
     return hiscores
