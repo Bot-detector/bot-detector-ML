@@ -154,6 +154,8 @@ async def train(secret: str):
         hiscore_data = await req.get_hiscore_data(label_id=label["id"])
         hiscores.extend(hiscore_data)
 
+        logger.info(f"{label=}, {len(players)=}, {len(hiscores)=}")
+
     # parse hiscoreData
     hiscoredata = data.hiscoreData(hiscores)
     del hiscores
@@ -186,8 +188,8 @@ async def train(secret: str):
 
     # merge features with target
     features_labeled = features.merge(player_data, left_index=True, right_index=True)
-
     print(pd.DataFrame(features_labeled.iloc[:, -1].value_counts()))
+
     # Count occurrences of each category in the target column
     target_counts = features_labeled["target"].value_counts()
 
