@@ -143,7 +143,7 @@ async def get_hiscore_data(label_id: int, limit: int = 5000):
             logger.error(f"expected dict but got {type(last_record)}, {last_record=}")
             break
 
-        last_player_id = data.get("Player_id", None)
+        last_player_id = last_record.get("Player_id", None)
         if last_player_id is None:
             logger.error(f"expected int but got None, {last_record=}")
             break
